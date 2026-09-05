@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WeatherGPT</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- TOP BAR -->
+        <header class="top-bar">
+
+            <button class="icon-btn">
+                ☰
+            </button>
+
+            <div class="logo">
+                🌦️ WeatherGPT
+            </div>
+
+            <button class="icon-btn">
+                🔔
+            </button>
+
+        </header>
+
+
+        <!-- MAIN CONTENT -->
+<main class="content">
+
+    <!-- HOME SCREEN -->
+    <section id="homeScreen" class="screen">
+
+        <section class="location">
+            <p>Good Afternoon 👋</p>
+            <h2>Ahmedabad, India</h2>
+        </section>
+
+        <section class="weather-card">
+            <div class="weather-icon">☀️</div>
+            <h1>32°C</h1>
+            <h3>Sunny</h3>
+            <p>Feels like 35°C</p>
+        </section>
+
+        <section class="weather-details">
+
+            <div class="detail-card">
+                <span>💧</span>
+                <strong>65%</strong>
+                <small>Humidity</small>
+            </div>
+
+            <div class="detail-card">
+                <span>💨</span>
+                <strong>12 km/h</strong>
+                <small>Wind</small>
+            </div>
+
+            <div class="detail-card">
+                <span>🌧️</span>
+                <strong>20%</strong>
+                <small>Rain</small>
+            </div>
+
+        </section>
+
+        <section class="ai-card">
+
+            <div class="ai-icon">🤖</div>
+
+            <div>
+                <h3>WeatherGPT Insight</h3>
+                <p>
+                    The weather is warm today.
+                    Rain may be expected in the evening.
+                </p>
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <!-- FORECAST SCREEN -->
+    <section id="forecastScreen" class="screen hidden">
+
+        <!-- FORECAST HEADER -->
+
+        <div class="forecast-header">
+
+            <div>
+                <p class="subtitle">Weather Forecast</p>
+                <h1>Ahmedabad</h1>
+            </div>
+
+            <div class="location-icon">
+                📍
+            </div>
+
+        </div>
+
+
+        <!-- FORECAST SUMMARY -->
+
+        <div class="forecast-summary">
+
+            <div>
+
+                <span class="big-weather-icon">☀️</span>
+
+                <div>
+                    <h2>32°C</h2>
+                    <p>Sunny</p>
+                </div>
+
+            </div>
+
+            <div class="summary-info">
+
+                <span>H: 35°</span>
+                <span>L: 25°</span>
+
+            </div>
+
+        </div>
+
+
+        <!-- FORECAST TABS -->
+
+        <div class="forecast-tabs">
+
+            <button class="forecast-tab active">
+                Today
+            </button>
+
+            <button class="forecast-tab">
+                Tomorrow
+            </button>
+
+            <button class="forecast-tab">
+                7 Days
+            </button>
+
+        </div>
+
+
+        <!-- HOURLY FORECAST -->
+
+        <div class="section-title">
+
+            <h2>Hourly Forecast</h2>
+
+            <span>Today</span>
+
+        </div>
+
+
+        <div class="hourly-container">
+
+            <div class="hour-card active">
+
+                <small>Now</small>
+
+                <span>☀️</span>
+
+                <strong>32°</strong>
+
+                <small>20%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>11 AM</small>
+
+                <span>☀️</span>
+
+                <strong>32°</strong>
+
+                <small>10%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>1 PM</small>
+
+                <span>☀️</span>
+
+                <strong>34°</strong>
+
+                <small>15%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>3 PM</small>
+
+                <span>⛅</span>
+
+                <strong>33°</strong>
+
+                <small>25%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>5 PM</small>
+
+                <span>🌧️</span>
+
+                <strong>30°</strong>
+
+                <small>60%</small>
+
+            </div>
+
+        </div>
+
+
+        <!-- 7 DAY FORECAST -->
+
+        <div class="section-title">
+
+            <h2>7-Day Forecast</h2>
+
+        </div>
+
+
+        <div class="week-forecast">
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Today</strong>
+                    <small>Sep 3</small>
+                </div>
+
+                <span class="day-icon">☀️</span>
+
+                <div class="rain">
+                    💧 20%
+                </div>
+
+                <div class="temperature">
+                    <strong>32°</strong>
+                    <span>25°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Fri</strong>
+                    <small>Sep 4</small>
+                </div>
+
+                <span class="day-icon">⛅</span>
+
+                <div class="rain">
+                    💧 30%
+                </div>
+
+                <div class="temperature">
+                    <strong>31°</strong>
+                    <span>24°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Sat</strong>
+                    <small>Sep 5</small>
+                </div>
+
+                <span class="day-icon">🌧️</span>
+
+                <div class="rain">
+                    💧 65%
+                </div>
+
+                <div class="temperature">
+                    <strong>29°</strong>
+                    <span>23°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Sun</strong>
+                    <small>Sep 6</small>
+                </div>
+
+                <span class="day-icon">🌦️</span>
+
+                <div class="rain">
+                    💧 55%
+                </div>
+
+                <div class="temperature">
+                    <strong>30°</strong>
+                    <span>24°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Mon</strong>
+                    <small>Sep 7</small>
+                </div>
+
+                <span class="day-icon">☀️</span>
+
+                <div class="rain">
+                    💧 15%
+                </div>
+
+                <div class="temperature">
+                    <strong>33°</strong>
+                    <span>25°</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI FORECAST INSIGHT -->
+
+        <div class="forecast-ai">
+
+            <div class="forecast-ai-icon">
+                🤖
+            </div>
+
+            <div>
+
+                <h3>AI Forecast</h3>
+
+                <p>
+                    Rain chances increase after 4 PM.
+                    Consider outdoor activities before then.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+    <!-- ALERTS SCREEN -->
+<section id="alertsScreen" class="screen hidden">
+
+    <!-- ALERT HEADER -->
+
+    <div class="alerts-header">
+
+        <div>
+            <p class="subtitle">Weather Warnings</p>
+            <h1>Alerts</h1>
+        </div>
+
+        <div class="alert-bell">
+            🔔
+        </div>
+
+    </div>
+
+
+    <!-- ALERT SUMMARY -->
+
+    <div class="alert-summary">
+
+        <div class="alert-summary-icon">
+            ⚠️
+        </div>
+
+        <div>
+
+            <h2>2 Active Alerts</h2>
+
+            <p>
+                Weather conditions require attention.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ALERT FILTERS -->
+
+    <div class="alert-filters">
+
+        <button class="alert-filter active">
+            All
+        </button>
+
+        <button class="alert-filter high-filter">
+            High
+        </button>
+
+        <button class="alert-filter medium-filter">
+            Medium
+        </button>
+
+        <button class="alert-filter low-filter">
+            Low
+        </button>
+
+    </div>
+
+
+    <!-- HIGH ALERT -->
+
+    <div class="alert-card high-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    🌧️
+                </span>
+
+                <div>
+
+                    <h3>Heavy Rainfall</h3>
+
+                    <small>
+                        HIGH SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity high">
+                HIGH
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Heavy rainfall is expected in your
+            area during the evening. Rainfall may
+            affect road conditions and visibility.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 4:00 PM – 8:00 PM</span>
+
+        </div>
+
+
+        <div class="alert-action">
+
+            <span>⚠️ Stay alert during travel</span>
+
+            <button>
+                Details →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MEDIUM ALERT -->
+
+    <div class="alert-card medium-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    🌡️
+                </span>
+
+                <div>
+
+                    <h3>High Temperature</h3>
+
+                    <small>
+                        MEDIUM SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity medium">
+                MEDIUM
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Temperatures may reach 35°C today.
+            Stay hydrated and avoid prolonged
+            exposure to direct sunlight.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 12:00 PM – 3:00 PM</span>
+
+        </div>
+
+
+        <div class="alert-action">
+
+            <span>💧 Stay hydrated</span>
+
+            <button>
+                Details →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- LOW ALERT -->
+
+    <div class="alert-card low-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    💨
+                </span>
+
+                <div>
+
+                    <h3>Strong Winds</h3>
+
+                    <small>
+                        LOW SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity low">
+                LOW
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Wind speeds may temporarily increase
+            during the evening.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 Evening</span>
+
+        </div>
+
+    </div>
+
+
+    <!-- AI SAFETY CARD -->
+
+    <div class="safety-card">
+
+        <div class="safety-icon">
+            🤖
+        </div>
+
+        <div>
+
+            <h3>WeatherGPT Recommendation</h3>
+
+            <p>
+
+                Heavy rain is the main concern today.
+                If possible, complete outdoor activities
+                before 4 PM and carry an umbrella.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+<!-- FARMER MODE SCREEN -->
+<section id="farmerScreen" class="screen hidden" aria-labelledby="farmerTitle">
+    <div class="farmer-header">
+        <div>
+            <p class="subtitle">Farmer Mode</p>
+            <h1 id="farmerTitle">Today's Farm Plan</h1>
+            <p class="farmer-location" id="farmerLocationLabel">Ahmedabad, India</p>
+        </div>
+        <span class="farmer-header-icon" aria-hidden="true">🌱</span>
+    </div>
+
+    <form class="farmer-controls" id="farmerPlanForm">
+        <label>Crop
+            <select id="farmerCrop" name="crop">
+                <option value="wheat">Wheat</option>
+                <option value="rice">Rice</option>
+                <option value="cotton">Cotton</option>
+                <option value="vegetables">Vegetables</option>
+            </select>
+        </label>
+        <label>Growth stage
+            <select id="farmerGrowthStage" name="growth_stage">
+                <option value="sowing">Sowing</option>
+                <option value="vegetative" selected>Vegetative</option>
+                <option value="flowering">Flowering</option>
+                <option value="harvest">Harvest</option>
+            </select>
+        </label>
+        <label>Soil moisture (%)
+            <input id="farmerSoilMoisture" name="soil_moisture" type="number" min="0" max="100" value="45" inputmode="decimal">
+        </label>
+        <button class="farmer-refresh" type="submit">Refresh plan</button>
+    </form>
+
+    <div id="farmerPlanStatus" class="farmer-status" role="status" aria-live="polite">Choose your crop to load a plan.</div>
+    <div id="farmerPlanContent">
+        <section class="farmer-card plan-card">
+            <div class="section-title"><h2>Today's Farm Plan</h2><span id="farmerPlanDate">Today</span></div>
+            <ul class="farm-task-list" id="farmTaskList"></ul>
+        </section>
+        <section class="farmer-card">
+            <div class="section-title"><h2>Rainfall forecast</h2><span>Hourly</span></div>
+            <div class="farmer-scroll-row" id="farmerHourlyRainfall"></div>
+            <div class="section-title"><h2>7 / 14-day outlook</h2><span>Daily</span></div>
+            <div class="farmer-scroll-row" id="farmerDailyRainfall"></div>
+        </section>
+        <div class="farmer-two-column">
+            <section class="farmer-card advisor-card">
+                <h2>💧 Irrigation advisor</h2>
+                <p id="farmerIrrigation">Add your crop details to see irrigation advice.</p>
+            </section>
+            <section class="farmer-card work-card">
+                <h2>☀️ Best time to work</h2>
+                <p id="farmerWorkTime">We'll suggest the safest work window.</p>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- =========================
+     AI CHAT SCREEN
+========================= -->
+
+<section id="chatScreen" class="screen hidden">
+
+    <!-- CHAT HEADER -->
+
+    <div class="chat-header">
+
+        <div class="chat-profile">
+
+            <div class="chat-avatar">
+                🤖
+            </div>
+
+            <div>
+
+                <h2>WeatherGPT</h2>
+
+                <div class="online-status">
+                    <span></span>
+                    AI Weather Assistant
+                </div>
+
+            </div>
+
+        </div>
+
+        <button class="chat-menu">
+            ⋮
+        </button>
+
+    </div>
+
+
+    <!-- CHAT BODY -->
+
+    <div class="chat-body" id="chatBody">
+
+        <!-- DATE -->
+
+        <div class="chat-date">
+            Today
+        </div>
+
+
+        <!-- AI MESSAGE -->
+
+        <div class="message ai-message">
+
+            <div class="message-avatar">
+                🤖
+            </div>
+
+            <div class="message-content">
+
+                <div class="message-bubble">
+
+                    <p>
+                        Hello! 👋
+                    </p>
+
+                    <p>
+                        I'm WeatherGPT. I can help you
+                        understand the weather, forecast,
+                        rainfall, temperature and alerts.
+                    </p>
+
+                    <p>
+                        What would you like to know?
+                    </p>
+
+                </div>
+
+                <small>WeatherGPT • Now</small>
+
+            </div>
+
+        </div>
+
+
+        <!-- USER MESSAGE -->
+
+        <div class="message user-message">
+
+            <div class="message-content">
+
+                <div class="message-bubble">
+
+                    <p>
+                        Will it rain today?
+                    </p>
+
+                </div>
+
+                <small>You • Now</small>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI RESPONSE -->
+
+        <div class="message ai-message">
+
+            <div class="message-avatar">
+                🤖
+            </div>
+
+            <div class="message-content">
+
+                <div class="message-bubble">
+
+                    <p>
+                        🌧️ There is a 60% chance of
+                        rain this evening in Ahmedabad.
+                    </p>
+
+                    <p>
+                        I recommend carrying an umbrella
+                        if you're going outside after 4 PM.
+                    </p>
+
+                </div>
+
+                <small>WeatherGPT • Now</small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- QUICK QUESTIONS -->
+
+    <div class="quick-section">
+
+        <p>Quick questions</p>
+
+        <div class="quick-questions">
+
+            <button class="quick-question">
+                🌧️ Will it rain today?
+            </button>
+
+            <button class="quick-question">
+                🌡️ How hot will it be?
+            </button>
+
+            <button class="quick-question">
+                ☀️ Is it good for outdoor activities?
+            </button>
+
+            <button class="quick-question">
+                📅 What's the forecast tomorrow?
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- CHAT INPUT -->
+
+    <div class="chat-input-area">
+
+        <button class="input-action">
+            ＋
+        </button>
+
+        <input
+            type="text"
+            id="chatInput"
+            placeholder="Ask WeatherGPT..."
+            autocomplete="off"
+        >
+
+        <button
+            class="send-button"
+            id="sendButton"
+        >
+            ➤
+        </button>
+
+    </div>
+
+</section>
+
+
+
+</main>
+
+        <!-- FLOATING BOTTOM NAVIGATION -->
+        <nav class="bottom-nav">
+
+            <button class="nav-item active">
+
+                <span>🏠</span>
+
+                <small>Home</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>🌤️</span>
+
+                <small>Forecast</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>⚠️</span>
+
+                <small>Alerts</small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>🤖</span>
+
+                <small>AI Chat</small>
+            </button>
+            <button class="nav-item" id="framerNav" aria-label="Open Farmer Mode">
+
+              <span>✨</span>
+
+              <small>Framer</small>
+            </button>
+
+        </nav>
+
+    </div>
+
+    
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
