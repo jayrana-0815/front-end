@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WeatherGPT</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="onboarding" id="onboarding" aria-live="polite">
+        <div class="onboarding-shell">
+            <header class="onboarding-header">
+                <div class="brand-lockup"><span class="brand-mark"><img src="cloud_pic.png" alt="WeatherGPT"></span><span>Weather<span>GPT</span></span></div>
+                <button class="language-button" id="onboardingLanguage" type="button">🌐 <span>English</span></button>
+            </header>
+            <div class="language-menu hidden" id="onboardingLanguageMenu">
+            </div>
+            <main class="onboarding-main">
+                <section class="onboarding-step active" data-onboarding-step="mode">
+                    <div class="onboarding-illustration" aria-hidden="true"><span>☀️</span><span>🌦️</span><span>🌾</span></div>
+                    <p class="eyebrow">YOUR WEATHER, YOUR WAY</p>
+                    <h1 data-i18n-onboarding="modeTitle">How will you use WeatherGPT?</h1>
+                    <p class="onboarding-subtitle" data-i18n-onboarding="modeSubtitle">Choose an experience made for you.</p>
+                    <div class="mode-cards">
+                        <button class="mode-card" type="button" data-mode="normal">
+                            <span class="mode-icon">🌦️</span><span><strong>Normal User</strong><small>Get personalized weather forecasts, alerts and local conditions.</small></span><b>→</b>
+                        </button>
+                        <button class="mode-card farmer-card" type="button" data-mode="farmer">
+                            <span class="mode-icon">👨‍🌾</span><span><strong>Farmer Mode</strong><small>Get crop-specific weather risks, farming plans and early warnings.</small></span><b>→</b>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="onboarding-step" data-onboarding-step="profile">
+                    <button class="back-button" type="button" data-onboarding-back>← Back</button>
+                    <div class="step-heading"><span class="step-badge" id="profileStepBadge">1 of 2</span><span class="completion-track"><i id="profileProgress"></i></span></div>
+                    <p class="eyebrow" id="profileEyebrow">PERSONAL WEATHER</p>
+                    <h1 id="profileTitle">Let’s personalize your weather</h1>
+                    <p class="onboarding-subtitle">A few details help us make every forecast local.</p>
+                    <form class="profile-form" id="profileForm">
+                        <label id="nameLabel">Name<input required id="profileName" autocomplete="name" placeholder="e.g. Ramesh"></label>
+                        <div class="form-row"><label>Village / Area<input required id="profileVillage" placeholder="e.g. Sanand"></label><label>City<input required id="profileCity" placeholder="e.g. Ahmedabad"></label></div>
+                        <label>State<input required id="profileState" placeholder="e.g. Gujarat"></label>
+                        <div class="farmer-profile-field" id="onboardingCropsField" hidden>
+                            <label>Crop<select id="profileCrop"></select></label>
+                            <label>Planting date<input id="profilePlantingDate" type="date"></label>
+                        </div>
+                        <button class="location-button" type="button" id="useCurrentLocation">📍 Use Current Location</button>
+                        <p class="location-status" id="locationStatus" role="status"></p>
+                        <button class="primary-button" id="profileSubmit" type="submit">Continue <span>→</span></button>
+                    </form>
+                    <button class="skip-button" type="button" data-onboarding-skip>Skip for now</button>
+                </section>
+
+                <section class="onboarding-step" data-onboarding-step="confirm">
+                    <div class="confirm-art">📍</div><p class="eyebrow">LOCATION CONFIRMATION</p>
+                    <h1>We found your location</h1><p class="onboarding-subtitle">Please confirm this is where you want local weather.</p>
+                    <div class="location-confirm-card"><div class="confirmed-place"><span>📍</span><div><strong id="confirmedVillage">Waiting for location</strong><small id="confirmedAddress">Waiting for live data</small></div><button type="button" id="changeLocation">Change</button></div><div class="weather-preview"><div><small>Current temperature</small><strong id="confirmedTemp">--</strong></div><div><small>Condition</small><strong id="confirmedCondition">--</strong></div><div><small>Rain probability</small><strong id="confirmedRain">--</strong></div></div></div>
+                    <p class="offline-note" id="offlineNote">✓ Saved locally — weather will sync when you’re online.</p>
+                    <button class="primary-button" id="startWeather" type="button">Start WeatherGPT <span>→</span></button>
+                    <button class="skip-button" type="button" data-onboarding-skip>Skip for now</button>
+                </section>
+            </main>
+        </div>
+    </div>
+  
+    <div class="app">
+
+        <!-- TOP BAR -->
+        <header class="top-bar">
+
+            <button class="icon-btn">
+                ☰
+            </button>
+
+            <div class="logo">
+                🌦️ WeatherGPT
+            </div>
+
+            <button class="icon-btn">
+                🔔
+            </button>
+
+        </header>
+
+        <section class="location-toolbar" aria-label="Current location and date">
+            <div class="current-context">
+                <span class="context-icon">📍</span>
+                <div>
+                    <small>Current location</small>
+                    <strong id="currentLocationLabel">Ahmedabad, India</strong>
+                </div>
+            </div>
+            <time id="currentDateLabel"></time>
+            <form class="location-search" id="locationSearchForm" role="search">
+                <label class="sr-only" for="locationSearchInput">Search location</label>
+                <input id="locationSearchInput" type="search" placeholder="Search city..." autocomplete="off">
+                <button type="submit" aria-label="Search location">⌕</button>
+            </form>
+            <div class="location-results hidden" id="locationResults" role="listbox"></div>
+        </section>
+        <main class="content">
+            <section id="homeScreen" class="screen">
+                <section class="location">
+                    <p>Good Afternoon 👋</p>
+                    <h2 id="homeLocationLabel">Ahmedabad, India</h2>
+                </section>
+                <section class="weather-card">
+                    <div class="weather-scene" id="weatherScene" aria-hidden="true">
+                        <div class="weather-particles" id="weatherParticles"></div>
+                        <div class="weather-icon" id="weatherIcon">☀️</div>
+                    </div>
+                    <h1 id="currentTemperature">--</h1>
+                    <h3 id="weatherConditionLabel">Waiting for live data</h3>
+                    <p id="feelsLikeLabel">Feels like --</p>
+                    <div class="weather-card-summary">
+                        <span id="temperatureDifference">Waiting for live data</span>
+                        <span class="comfort-badge" id="comfortBadge">--</span>
+                    </div>
+                    <small class="data-quality-note" id="homeDataQuality">Source: waiting · Confidence: --</small>
+                </section>
+                <section class="weather-details">
+                    <div class="detail-card"><span>💧</span><strong id="currentHumidity">--</strong><small>Humidity</small></div>
+                    <div class="detail-card"><span>💨</span><strong id="currentWind">--</strong><small>Wind</small></div>
+                    <div class="detail-card"><span>🌧️</span><strong id="currentRain">--</strong><small>Rain</small></div>
+                </section>
+                <section class="home-chat-panel">
+                    <div class="chat-header"><div class="chat-profile"><div class="chat-avatar"><img src="ai-avatar.png" alt="WeatherGPT"></div><div><h2>WeatherGPT</h2><div class="online-status"><span></span>AI Weather Assistant</div></div></div></div>
+                    <div class="chat-body" id="chatBody"><div class="chat-date">Today</div><div class="message ai-message"><div class="message-avatar"><img src="ai-avatar.png" alt="WeatherGPT"></div><div class="message-content"><div class="message-bubble"><p>Hello! 👋</p><p>I'm WeatherGPT. Ask me about today's weather, rainfall, temperature or alerts.</p></div><small>WeatherGPT • Now</small></div></div></div>
+                    <div class="quick-section"><p>Quick questions</p><div class="quick-questions"><button class="quick-question">🌧️ Will it rain today?</button><button class="quick-question">🌡️ How hot will it be?</button><button class="quick-question">☀️ Is it good for outdoor activities?</button><button class="quick-question">📅 What's the forecast tomorrow?</button><button class="quick-question travel-quick-question" data-travel="true">🧳 Plan a weather-safe trip</button></div></div>
+                    <div class="chat-input-area"><button class="input-action" id="voiceInputButton" aria-label="Use microphone" title="Speak your question">🎙️</button><input type="text" id="chatInput" placeholder="Ask WeatherGPT..." autocomplete="off"><button class="send-button" id="sendButton" aria-label="Send message">➤</button></div>
+                </section>
+            </section>
+            <section id="profileScreen" class="screen hidden" aria-labelledby="profileScreenTitle">
+                <div class="forecast-header"><div><p class="subtitle">Your account</p><h1 id="profileScreenTitle">Profile</h1></div><div class="location-icon">👤</div></div>
+                <div class="profile-summary-card">
+                    <div class="profile-avatar">👤</div>
+                    <div><h2 id="savedProfileName">Weather friend</h2><p id="savedProfileLocation">Add your location to personalize forecasts.</p></div>
+                </div>
+                <div class="profile-settings-card"><div><span>🌐</span><strong>Language</strong><small id="savedProfileLanguage">English</small></div><div><span>📍</span><strong>Weather location</strong><small id="savedProfileArea">Not set</small></div><div><span>🔄</span><strong>Sync status</strong><small id="profileSyncStatus">Saved on this device</small></div></div>
+                <form class="profile-edit-form" id="profileEditForm">
+                    <h2>Edit your details</h2>
+                    <label>Name<input required id="profileEditName" autocomplete="name" placeholder="e.g. Ramesh"></label>
+                    <div class="form-row"><label>Village / Area<input required id="profileEditVillage" placeholder="e.g. Sanand"></label><label>City<input required id="profileEditCity" placeholder="e.g. Ahmedabad"></label></div>
+                    <label>State<input required id="profileEditState" placeholder="e.g. Gujarat"></label>
+                    <label class="farmer-profile-field" id="profileEditCropsField" hidden>Crops information<textarea id="profileEditCrops" rows="3" placeholder="e.g. wheat, cotton; planted in October"></textarea></label>
+                    <p class="profile-edit-status" id="profileEditStatus" role="status"></p>
+                    <button class="primary-button" id="profileEditSubmit" type="submit">Save changes <span>✓</span></button>
+                </form>
+            </section>
+            <section id="forecastScreen" class="screen hidden">
+                <div class="forecast-header" role="button" tabindex="0" title="Click to search location"><div><p class="subtitle">Weather Forecast</p><h1 id="forecastLocationLabel">Ahmedabad</h1></div><div class="location-icon" title="Change location">📍</div></div>
+        <div class="forecast-summary">
+
+                <div>
+                <div>
+                    <h2 id="forecastHeroTemp">--</h2>
+                    <p id="forecastHeroCondition">Sunny</p>
+                </div>
+
+            </div>
+
+            <div class="summary-info">
+
+                <span id="forecastHeroHigh">H: 35°</span>
+                <span id="forecastHeroLow">L: 25°</span>
+
+            </div>
+
+        </div>
+
+
+        <!-- FORECAST TABS -->
+
+        <div class="forecast-tabs">
+
+            <button class="forecast-tab active">
+                Today
+            </button>
+
+            <button class="forecast-tab">
+                Tomorrow
+            </button>
+
+            <button class="forecast-tab">
+                7 Days
+            </button>
+
+        </div>
+
+
+        <!-- HOURLY FORECAST -->
+
+        <div class="section-title">
+
+            <h2>Hourly Forecast</h2>
+
+            <span>Today</span>
+
+        </div>
+
+
+        <div class="hourly-container">
+
+            <div class="hour-card active">
+
+                <small>Now</small>
+
+                <span>☀️</span>
+
+                <strong>32°</strong>
+
+                <small>20%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>11 AM</small>
+
+                <span>☀️</span>
+
+                <strong>32°</strong>
+
+                <small>10%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>1 PM</small>
+
+                <span>☀️</span>
+
+                <strong>34°</strong>
+
+                <small>15%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>3 PM</small>
+
+                <span>⛅</span>
+
+                <strong>33°</strong>
+
+                <small>25%</small>
+
+            </div>
+
+
+            <div class="hour-card">
+
+                <small>5 PM</small>
+
+                <span>🌧️</span>
+
+                <strong>30°</strong>
+
+                <small>60%</small>
+
+            </div>
+
+        </div>
+
+        <section class="forecast-chart-card" aria-labelledby="normalTrendTitle">
+            <div class="chart-card-header">
+                <div>
+                    <p class="chart-eyebrow">7-DAY OUTLOOK</p>
+                    <h2 id="normalTrendTitle">Temperature trend</h2>
+                </div>
+                <div class="chart-legend" aria-label="Chart legend">
+                    <span><i class="legend-dot high"></i>High</span>
+                    <span><i class="legend-dot low"></i>Low</span>
+                    <span><i class="legend-bar"></i>Rain</span>
+                    <span><i class="alert-dot safe"></i>Safe</span>
+                    <span><i class="alert-dot watch"></i>Watch</span>
+                    <span><i class="alert-dot danger"></i>Alert</span>
+                </div>
+            </div>
+            <div class="forecast-chart">
+                <svg viewBox="0 0 640 250" role="img" aria-label="Seven day high and low temperature trend with rain probability">
+                    <defs>
+                        <linearGradient id="normalHighFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#4d8df7" stop-opacity=".22"/>
+                            <stop offset="100%" stop-color="#4d8df7" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <g class="chart-grid">
+                        <line x1="48" y1="30" x2="620" y2="30"/><line x1="48" y1="82" x2="620" y2="82"/>
+                        <line x1="48" y1="134" x2="620" y2="134"/><line x1="48" y1="186" x2="620" y2="186"/>
+                    </g>
+                    <g class="chart-axis-labels"><text x="8" y="35">36°</text><text x="8" y="87">32°</text><text x="8" y="139">28°</text><text x="8" y="191">24°</text></g>
+                    <g class="rain-bars"><rect class="bar-safe" x="72" y="160" width="22" height="26" rx="6"/><rect class="bar-watch" x="162" y="147" width="22" height="39" rx="6"/><rect class="bar-danger" x="252" y="101" width="22" height="85" rx="6"/><rect class="bar-danger" x="342" y="114" width="22" height="72" rx="6"/><rect class="bar-watch" x="432" y="167" width="22" height="19" rx="6"/><rect class="bar-safe" x="522" y="173" width="22" height="13" rx="6"/></g>
+                    <path class="chart-area" d="M83 82 L173 95 L263 121 L353 108 L443 69 L533 56 L533 186 L83 186 Z"/>
+                    <path class="chart-line high-line" d="M83 82 L173 95 L263 121 L353 108 L443 69 L533 56"/>
+                    <path class="chart-line low-line" d="M83 173 L173 186 L263 186 L353 173 L443 160 L533 160"/>
+                    <g class="chart-points high-points"><circle cx="83" cy="82" r="4"/><circle cx="173" cy="95" r="4"/><circle cx="263" cy="121" r="4"/><circle cx="353" cy="108" r="4"/><circle cx="443" cy="69" r="4"/><circle cx="533" cy="56" r="4"/></g>
+                    <g class="chart-labels"><text x="83" y="216">Today</text><text x="173" y="216">Fri</text><text x="263" y="216">Sat</text><text x="353" y="216">Sun</text><text x="443" y="216">Mon</text><text x="533" y="216">Tue</text></g>
+                </svg>
+            </div>
+            <div class="chart-summary"><span><strong>31°</strong> average high</span><span><strong>35%</strong> rain probability</span><span class="trend-up">↗ Stable warming trend</span></div>
+        </section>
+
+
+        <!-- 7 DAY FORECAST -->
+
+        <div class="section-title">
+
+            <h2>7-Day Forecast</h2>
+
+        </div>
+
+
+        <div class="week-forecast">
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Today</strong>
+                    <small>Sep 3</small>
+                </div>
+
+                <span class="day-icon">☀️</span>
+
+                <div class="rain">
+                    💧 20%
+                </div>
+
+                <div class="temperature">
+                    <strong>32°</strong>
+                    <span>25°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Fri</strong>
+                    <small>Sep 4</small>
+                </div>
+
+                <span class="day-icon">⛅</span>
+
+                <div class="rain">
+                    💧 30%
+                </div>
+
+                <div class="temperature">
+                    <strong>31°</strong>
+                    <span>24°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Sat</strong>
+                    <small>Sep 5</small>
+                </div>
+
+                <span class="day-icon">🌧️</span>
+
+                <div class="rain">
+                    💧 65%
+                </div>
+
+                <div class="temperature">
+                    <strong>29°</strong>
+                    <span>23°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Sun</strong>
+                    <small>Sep 6</small>
+                </div>
+
+                <span class="day-icon">🌦️</span>
+
+                <div class="rain">
+                    💧 55%
+                </div>
+
+                <div class="temperature">
+                    <strong>30°</strong>
+                    <span>24°</span>
+                </div>
+
+            </div>
+
+
+            <div class="day-card">
+
+                <div class="day-name">
+                    <strong>Mon</strong>
+                    <small>Sep 7</small>
+                </div>
+
+                <span class="day-icon">☀️</span>
+
+                <div class="rain">
+                    💧 15%
+                </div>
+
+                <div class="temperature">
+                    <strong>33°</strong>
+                    <span>25°</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI FORECAST INSIGHT -->
+
+        <div class="forecast-ai">
+
+            <div class="forecast-ai-icon">
+                🤖
+            </div>
+
+            <div>
+
+                <h3>AI Forecast</h3>
+
+                <p>
+                    Rain chances increase after 4 PM.
+                    Consider outdoor activities before then.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+    <!-- ALERTS SCREEN -->
+<section id="alertsScreen" class="screen hidden">
+
+    <!-- ALERT HEADER -->
+
+    <div class="alerts-header">
+
+        <div>
+            <p class="subtitle">Weather Warnings</p>
+            <h1>Alerts</h1>
+        </div>
+
+        <div class="alert-bell">
+            🔔
+        </div>
+
+    </div>
+
+    <section class="early-warning-center" aria-labelledby="earlyWarningTitle">
+        <div class="early-warning-heading">
+            <div>
+                <p class="chart-eyebrow">EARLY WARNING SYSTEM</p>
+                <h2 id="earlyWarningTitle">Live risk center</h2>
+                <p id="earlyWarningUpdated">Checking official weather sources...</p>
+            </div>
+            <button type="button" class="alert-refresh-btn" id="refreshEarlyWarnings">↻ Refresh</button>
+        </div>
+        <div class="warning-level normal" id="warningLevelCard">
+            <span class="warning-level-icon">✓</span>
+            <div><strong id="warningLevel">Normal</strong><p id="warningSummary">No verified warning is available for your location.</p></div>
+        </div>
+        <div class="warning-types" id="warningTypes">
+            <span>🌀 Cyclone</span><span>🌧️ Heavy rain</span><span>⛈️ Thunderstorm</span><span>🌊 Flood risk</span><span>🌡️ Heatwave</span><span>💨 Strong wind</span>
+        </div>
+        <div class="warning-meta"><span>📍 <b id="warningLocation">Your location</b></span><span>🏛️ <b id="warningSource">Official source pending</b></span></div>
+        <div class="alert-insight-grid">
+            <article class="alert-insight-card rain-expectation-card">
+                <div class="insight-card-heading"><span>🌧️</span><div><p>Rain expectation</p><strong id="rainExpectation">Checking forecast...</strong></div></div>
+                <small id="rainExpectationDetail">Verified 24-hour forecast will appear here.</small>
+            </article>
+            <article class="alert-insight-card">
+                <div class="insight-card-heading"><span>☔</span><div><p>Next 24 hours</p><strong id="rain24Status">Checking forecast...</strong></div></div>
+                <small id="rain24Detail">No forecast has been loaded yet.</small>
+            </article>
+            <article class="alert-insight-card">
+                <div class="insight-card-heading"><span>🌾</span><div><p>Crop risk</p><strong id="cropRisk">Not available</strong></div></div>
+                <small id="cropSolution">A verified weather assessment is required before advice is shown.</small>
+            </article>
+            <article class="alert-insight-card flood-risk-card">
+                <div class="insight-card-heading"><span>🌊</span><div><p>Flood risk score</p><strong id="floodRiskScore">— / 100</strong></div></div>
+                <div class="risk-meter"><span id="floodRiskMeter"></span></div>
+                <small id="floodRiskDetail">Based on verified rainfall, drainage, and official flood guidance.</small>
+            </article>
+        </div>
+        <div class="warning-map">
+            <div class="section-title"><h3>Risk / affected-area map</h3><span>Verified areas only</span></div>
+            <div class="warning-map-frame"><iframe id="warningMap" title="Early warning risk map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=68.8%2C20.0%2C77.0%2C24.8&layer=mapnik"></iframe><span id="warningMapNote">No affected area has been published.</span></div>
+        </div>
+        <div class="farmer-warning-tip"><span>🌾</span><div><strong>Farmer safety note</strong><p id="farmerWarningText">Keep livestock, tools, and harvested crops secured. Follow local authority instructions before working outdoors.</p></div></div>
+        <div class="warning-ai"><span>🤖</span><p id="warningAiText">I will explain verified warnings in simple English, Gujarati, or Hindi. Alerts are never generated without a trusted source.</p></div>
+        <div class="alert-history"><div class="section-title"><h3>Alert history</h3><span>Latest official updates</span></div><div id="alertHistoryList"><p class="empty-history">No verified alerts recorded for this location.</p></div></div>
+    </section>
+
+
+    <!-- ALERT SUMMARY -->
+
+    <div class="alert-summary">
+
+        <div class="alert-summary-icon">
+            ⚠️
+        </div>
+
+        <div>
+
+            <h2>2 Active Alerts</h2>
+
+            <p>
+                Weather conditions require attention.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ALERT FILTERS -->
+
+    <div class="alert-filters">
+
+        <button class="alert-filter active" data-alert-filter="all">
+            All
+        </button>
+
+        <button class="alert-filter high-filter" data-alert-filter="high">
+            High
+        </button>
+
+        <button class="alert-filter medium-filter" data-alert-filter="medium">
+            Medium
+        </button>
+
+        <button class="alert-filter low-filter" data-alert-filter="low">
+            Low
+        </button>
+
+    </div>
+
+
+    <!-- HIGH ALERT -->
+
+    <div class="alert-card high-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    🌧️
+                </span>
+
+                <div>
+
+                    <h3>Heavy Rainfall</h3>
+
+                    <small>
+                        HIGH SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity high">
+                HIGH
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Heavy rainfall is expected in your
+            area during the evening. Rainfall may
+            affect road conditions and visibility.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 4:00 PM – 8:00 PM</span>
+
+        </div>
+
+
+        <div class="alert-action">
+
+            <span>⚠️ Stay alert during travel</span>
+
+            <button type="button" class="alert-details-btn" data-alert-details="heavy-rain">
+                Details →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MEDIUM ALERT -->
+
+    <div class="alert-card medium-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    🌡️
+                </span>
+
+                <div>
+
+                    <h3>High Temperature</h3>
+
+                    <small>
+                        MEDIUM SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity medium">
+                MEDIUM
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Temperatures may reach 35°C today.
+            Stay hydrated and avoid prolonged
+            exposure to direct sunlight.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 12:00 PM – 3:00 PM</span>
+
+        </div>
+
+
+        <div class="alert-action">
+
+            <span>💧 Stay hydrated</span>
+
+            <button type="button" class="alert-details-btn" data-alert-details="high-temperature">
+                Details →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- LOW ALERT -->
+
+    <div class="alert-card low-alert">
+
+        <div class="alert-card-top">
+
+            <div class="alert-type">
+
+                <span class="alert-icon">
+                    💨
+                </span>
+
+                <div>
+
+                    <h3>Strong Winds</h3>
+
+                    <small>
+                        LOW SEVERITY
+                    </small>
+
+                </div>
+
+            </div>
+
+            <span class="severity low">
+                LOW
+            </span>
+
+        </div>
+
+
+        <p class="alert-description">
+
+            Wind speeds may temporarily increase
+            during the evening.
+
+        </p>
+
+
+        <div class="alert-info">
+
+            <span>📍 Ahmedabad</span>
+
+            <span>🕐 Evening</span>
+
+        </div>
+
+    </div>
+
+
+    <!-- AI SAFETY CARD -->
+
+    <div class="safety-card">
+
+        <div class="safety-icon">
+            🤖
+        </div>
+
+        <div>
+
+            <h3>WeatherGPT Recommendation</h3>
+
+            <p>
+
+                Heavy rain is the main concern today.
+                If possible, complete outdoor activities
+                before 4 PM and carry an umbrella.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CYCLONE INTELLIGENCE CENTER -->
+<section id="cycloneScreen" class="screen hidden" aria-labelledby="cycloneTitle">
+    <div class="cyclone-header">
+        <div>
+            <p class="subtitle">SIH 26068 · Weather Intelligence</p>
+            <h1 id="cycloneTitle">Cyclone Center</h1>
+            <p class="cyclone-updated" id="cycloneUpdated">Checking official sources...</p>
+        </div>
+        <span class="cyclone-icon">🌀</span>
+    </div>
+
+    <div class="cyclone-status-card neutral" id="cycloneStatusCard">
+        <div class="status-row"><span class="status-light"></span><strong id="cycloneStatus">No active cyclone warning</strong></div>
+        <h2 id="cycloneName">Official data is being checked</h2>
+        <p id="cycloneMessage">We will show an alert only when verified data is available from the configured weather service.</p>
+        <small>Source: <span id="cycloneSource">WeatherGPT live data service</span></small>
+    </div>
+
+    <div class="cyclone-stats">
+        <div><span>📍 Location</span><strong id="cycloneLocation">Not available</strong><small id="cycloneDistance">Distance: —</small></div>
+        <div><span>💨 Wind</span><strong id="cycloneWind">—</strong><small id="cycloneDirection">Direction: —</small></div>
+        <div><span>🌧️ Rainfall</span><strong id="cycloneRainfall">—</strong><small>Verified forecast only</small></div>
+    </div>
+
+    <div class="cyclone-map-card">
+        <div class="section-title"><h2>Tracking map</h2><span>Live base map</span></div>
+        <div class="cyclone-map-wrap">
+            <iframe id="cycloneMap" title="Cyclone tracking map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=68.8%2C20.0%2C77.0%2C24.8&layer=mapnik"></iframe>
+            <div class="map-empty-note" id="cycloneMapNote">No verified track to plot</div>
+        </div>
+        <div class="path-key"><span>• Historical path</span><span>• Predicted path</span><span>Track appears only with official data</span></div>
+    </div>
+
+    <div class="cyclone-alert-grid">
+        <div class="cyclone-alert watch"><strong>🟡 Watch</strong><p>Monitor official updates and keep essential supplies ready.</p></div>
+        <div class="cyclone-alert warning"><strong>🟠 Warning</strong><p>Secure equipment and follow local administration instructions.</p></div>
+        <div class="cyclone-alert emergency"><strong>🔴 Emergency</strong><p>Move to a safe shelter when authorities issue an evacuation order.</p></div>
+    </div>
+
+    <div class="cyclone-timeline">
+        <div class="section-title"><h2>Expected movement</h2><span id="cycloneLandfall">No landfall estimate</span></div>
+        <p id="cycloneMovement">A movement forecast will appear here when a verified cyclone advisory is received.</p>
+    </div>
+
+    <div class="farmer-cyclone-card">
+        <span>🌾</span>
+        <div><strong>Farmer precautions</strong><p>Harvest ready produce where practical, secure loose tools and livestock, clear drainage, and do not spray or irrigate during an official warning.</p></div>
+    </div>
+
+    <div class="cyclone-ai-card">
+        <div class="forecast-ai-icon">🤖</div>
+        <div><h3>Ask about this cyclone</h3><p id="cycloneAiText">I can explain verified cyclone information in simple English, Gujarati, or Hindi. No warning is shown unless a trusted source confirms it.</p></div>
+    </div>
+</section>
+<!-- FARMER MODE SCREEN -->
+<section id="farmerScreen" class="screen hidden" aria-labelledby="farmerTitle">
+    <div class="farmer-header">
+        <div>
+            <p class="subtitle">Farmer Mode</p>
+            <h1 id="farmerTitle">Today's Farm Plan</h1>
+            <p class="farmer-location" id="farmerLocationLabel">📍 Ahmedabad, India</p>
+        </div>
+        <span class="farmer-header-icon" aria-hidden="true">🌱</span>
+    </div>
+    <div id="planningStart" class="planning-start-card">
+        <p class="chart-eyebrow">SMART CROP PLANNER</p>
+        <h2>Before we build your plan</h2>
+        <p>Are you starting a new crop this season?</p>
+        <div class="planning-choice-row">
+            <button type="button" class="planning-choice primary" data-planning-choice="yes">Yes, start cropping</button>
+            <button type="button" class="planning-choice" data-planning-choice="no">No, show seasonal advice</button>
+        </div>
+        <div id="savedFarmProfiles" class="saved-farm-profiles" aria-live="polite"></div>
+    </div>
+
+    <form class="farmer-controls hidden" id="farmerPlanForm">
+        <div class="farmer-form-language">
+            <label for="planningLanguageSelect">Planning language
+                <select id="planningLanguageSelect"></select>
+            </label>
+        </div>
+        <label>Crop
+            <select id="farmerCrop" name="crop">
+                <optgroup label="Cereals"><option value="rice">🌾 Rice / Paddy</option><option value="wheat">🌾 Wheat</option><option value="maize">🌽 Maize</option><option value="bajra">🌾 Bajra</option><option value="sorghum">🌾 Sorghum / Jowar</option><option value="ragi">🌾 Ragi</option><option value="barley">🌾 Barley</option><option value="oats">🌾 Oats</option></optgroup>
+                <optgroup label="Pulses"><option value="chickpea">🫘 Chickpea / Gram</option><option value="pigeon-pea">🫘 Pigeon Pea / Tur</option><option value="green-gram">🫘 Green Gram / Moong</option><option value="black-gram">🫘 Black Gram / Urad</option><option value="lentil">🫘 Lentil / Masoor</option><option value="cowpea">🫘 Cowpea</option><option value="field-pea">🫛 Field Pea</option></optgroup>
+                <optgroup label="Oilseeds"><option value="groundnut">🥜 Groundnut</option><option value="soybean">🫘 Soybean</option><option value="mustard">🌻 Mustard</option><option value="sesame">🌿 Sesame</option><option value="sunflower">🌻 Sunflower</option><option value="castor">🌿 Castor</option><option value="safflower">🌿 Safflower</option></optgroup>
+                <optgroup label="Fibre and sugar"><option value="cotton">🌿 Cotton</option><option value="jute">🌿 Jute</option><option value="sugarcane">🌱 Sugarcane</option><option value="sweet-potato">🥔 Sweet potato</option><option value="tapioca">🥔 Tapioca</option></optgroup>
+                <optgroup label="Spices and vegetables"><option value="cumin">🌿 Cumin</option><option value="coriander">🌿 Coriander</option><option value="fennel">🌿 Fennel</option><option value="turmeric">🌿 Turmeric</option><option value="ginger">🌿 Ginger</option><option value="garlic">🧄 Garlic</option><option value="chilli">🌶️ Chilli</option><option value="fenugreek">🌿 Fenugreek</option><option value="potato">🥔 Potato</option><option value="tomato">🍅 Tomato</option><option value="brinjal">🍆 Brinjal</option><option value="okra">🥬 Okra</option><option value="cucumber">🥒 Cucumber</option><option value="onion">🧅 Onion</option><option value="spinach">🥬 Spinach</option></optgroup>
+                <optgroup label="Fruits and flowers"><option value="mango">🥭 Mango</option><option value="banana">🍌 Banana</option><option value="papaya">🍈 Papaya</option><option value="guava">🍐 Guava</option><option value="pomegranate">🍎 Pomegranate</option><option value="grapes">🍇 Grapes</option><option value="watermelon">🍉 Watermelon</option><option value="muskmelon">🍈 Muskmelon</option><option value="coconut">🥥 Coconut</option><option value="rose">🌹 Rose</option><option value="marigold">🌼 Marigold</option></optgroup>
+                <optgroup label="Plantation, medicinal and fodder"><option value="tea">🍃 Tea</option><option value="coffee">☕ Coffee</option><option value="arecanut">🌴 Arecanut</option><option value="rubber">🌳 Rubber</option><option value="aloe-vera">🌱 Aloe vera</option><option value="ashwagandha">🌿 Ashwagandha</option><option value="isabgol">🌿 Isabgol</option><option value="lemongrass">🌿 Lemongrass</option><option value="mint">🌿 Mint</option><option value="berseem">🌱 Berseem</option><option value="lucerne">🌱 Lucerne</option><option value="fodder-maize">🌽 Fodder Maize</option><option value="napier">🌱 Napier Grass</option></optgroup>
+            </select>
+        </label>
+        <label>Growth stage
+            <select id="farmerGrowthStage" name="growth_stage">
+                <option value="sowing">Sowing</option>
+                <option value="vegetative" selected>Vegetative</option>
+                <option value="flowering">Flowering</option>
+                <option value="harvest">Harvest</option>
+            </select>
+        </label>
+        <label>Soil type
+            <select id="farmerSoilType" name="soil_type"><option value="loam">Loamy</option><option value="clay">Clay</option><option value="sandy">Sandy</option><option value="black">Black soil</option><option value="alluvial">Alluvial</option><option value="unknown">I do not know</option></select>
+        </label>
+        <label>Soil moisture (%)
+            <input id="farmerSoilMoisture" name="soil_moisture" type="number" min="0" max="100" value="" placeholder="Loading..." inputmode="decimal" readonly>
+        </label>
+        <label>Water capacity
+            <select id="farmerWaterCapacity" name="water_capacity"><option value="high">High / enough water</option><option value="medium" selected>Medium</option><option value="low">Low / limited water</option></select>
+        </label>
+        <label>Irrigation status
+            <select id="farmerIrrigationStatus" name="irrigation_status"><option value="available">Irrigation available</option><option value="rainfed">Rain-fed</option><option value="pending">Irrigation pending</option></select>
+        </label>
+        <label>Planting date
+            <input id="farmerPlantingDate" name="planting_date" type="date">
+        </label>
+        <label>Farm note
+            <input id="farmerFarmNote" name="farm_note" type="text" placeholder="Pest, disease or field problem">
+        </label>
+        <button class="farmer-refresh" type="submit">Refresh plan</button>
+    </form>
+
+    <div id="farmerPlanStatus" class="farmer-status" role="status" aria-live="polite">Choose your crop to load a plan.</div>
+    <div id="farmerPlanContent" class="hidden">
+        <section class="farmer-card plan-card">
+            <div class="section-title"><h2>Today's Farm Plan</h2><span id="farmerPlanDate">Today</span></div>
+            <div class="daily-prediction-card" id="farmerTodayPrediction"></div>
+            <div class="plan-summary-grid" id="farmerPlanSummary"></div>
+            <ul class="farm-task-list" id="farmTaskList"></ul>
+        </section>
+        <section class="farmer-card">
+            <div class="section-title"><h2>Crop, soil and weather decision</h2><span>Simple advice</span></div>
+            <div class="plan-detail-list" id="farmerPlanDetails"></div>
+        </section>
+        <section class="farmer-card">
+            <div class="section-title"><h2>Activities to avoid</h2><span>Warning</span></div>
+            <ul class="farm-task-list avoid-list" id="farmerAvoidList"></ul>
+        </section>
+        <section class="farmer-card">
+            <div class="section-title"><h2>Week-wise crop plan</h2><span>Next 4 weeks</span></div>
+            <div class="weekly-plan-grid" id="farmerWeeklyPlan"></div>
+        </section>
+        <section class="farmer-card">
+            <div class="section-title"><h2>Rainfall forecast</h2><span>Hourly</span></div>
+            <div class="farmer-scroll-row" id="farmerHourlyRainfall"></div>
+            <div class="section-title"><h2>7 / 14-day outlook</h2><span>Daily</span></div>
+            <div class="farmer-scroll-row" id="farmerDailyRainfall"></div>
+        </section>
+        <div class="farmer-two-column">
+            <section class="farmer-card advisor-card">
+                <h2>💧 Irrigation advisor</h2>
+                <p id="farmerIrrigation">Add your crop details to see irrigation advice.</p>
+            </section>
+            <section class="farmer-card work-card">
+                <h2>☀️ Best time to work</h2>
+                <p id="farmerWorkTime">We'll suggest the safest work window.</p>
+            </section>
+        </div>
+    </div>
+    <section id="seasonalPlanner" class="seasonal-planner hidden">
+        <div class="farmer-header">
+            <div><p class="subtitle">AI seasonal planning</p><h2 id="seasonalPlannerTitle">Your crop plan</h2><p id="seasonalPlannerReason"></p></div>
+            <span class="farmer-header-icon">🌱</span>
+        </div>
+        <div class="crop-readiness-card" id="cropReadinessCard">
+            <span>🌱</span>
+            <div><small>Approximate crop readiness</small><strong id="cropReadiness">Add planting date to calculate</strong><p id="cropCountdown">Planting date and crop duration are needed.</p></div>
+        </div>
+        <label class="seasonal-crop-label">Choose a crop
+            <select id="seasonalCrop">
+                <option value="cotton">🌿 Cotton</option><option value="rice">🌾 Rice</option><option value="wheat">🌾 Wheat</option><option value="groundnut">🥜 Groundnut</option>
+            </select>
+            <div class="seasonal-soil-inputs">
+                <label>Soil type <select id="seasonalSoilType"><option value="loam">Loamy</option><option value="clay">Clay</option><option value="sandy">Sandy</option><option value="black">Black soil</option><option value="unknown">I do not know</option></select></label>
+                <label>Soil moisture (%) <input id="seasonalSoilMoisture" type="number" min="0" max="100" value="" placeholder="Loading..." readonly></label>
+                <label>Water capacity <select id="seasonalWaterCapacity"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></label>
+                <label>Growth stage <select id="seasonalGrowthStage"><option value="sowing">Sowing</option><option value="vegetative" selected>Vegetative</option><option value="flowering">Flowering</option><option value="harvest">Harvest</option></select></label>
+                <label>Planting date <input id="seasonalPlantingDate" type="date"></label>
+            </div>
+            <label class="seasonal-language-label">Planning language
+                    <select id="seasonalLanguage"></select>
+            </label>
+        </label>
+        <button type="button" class="farmer-refresh seasonal-analyze" id="seasonalAnalyzeButton">Analyze plan</button>
+        <div class="current-week-card"><strong>What to do this week</strong><p id="currentWeekAdvice"></p></div>
+        <div class="daily-prediction-card" id="seasonalTodayPrediction"></div>
+        <div class="monthly-crop-list" id="monthlyCropList"></div>
+        <div class="weekly-plan-grid" id="weeklyPlanGrid" aria-live="polite"></div>
+    </section>
+</section>
+
+<!-- FARMER FORECAST MODE SCREEN -->
+<section id="farmerForecastScreen" class="screen hidden farmer-subscreen">
+    <div class="farmer-header">
+        <div>
+            <p class="subtitle">Farmer Forecast</p>
+            <h1>7-Day Weather</h1>
+            <p class="farmer-location" id="farmerForecastLocationLabel">Based on your location</p>
+        </div>
+        <span class="farmer-header-icon">🌤️</span>
+    </div>
+
+    <!-- Season Indicator with Animation -->
+    <div class="season-indicator" id="seasonIndicator">
+        <div class="season-animation" id="seasonAnimation">☀️</div>
+        <div class="season-label" id="seasonLabel">Summer Season</div>
+        <div class="season-desc" id="seasonDesc">Perfect for planting heat-resistant crops</div>
+    </div>
+
+    <!-- 7 Day Forecast Cards -->
+    <div class="farmer-forecast-header">
+        <h2>7-Day Forecast</h2>
+    </div>
+
+    <div class="farmer-7day-forecast" id="farmer7DayForecast">
+        <div class="farmer-day-card">
+            <div class="day-date">Today</div>
+            <div class="day-condition">☀️</div>
+            <div class="day-temp">32°C / 25°C</div>
+            <div class="day-rain">🌧️ 20%</div>
+            <div class="day-wind">💨 12 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Tomorrow</div>
+            <div class="day-condition">⛅</div>
+            <div class="day-temp">31°C / 24°C</div>
+            <div class="day-rain">🌧️ 30%</div>
+            <div class="day-wind">💨 10 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Day 3</div>
+            <div class="day-condition">🌧️</div>
+            <div class="day-temp">29°C / 23°C</div>
+            <div class="day-rain">🌧️ 65%</div>
+            <div class="day-wind">💨 15 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Day 4</div>
+            <div class="day-condition">🌦️</div>
+            <div class="day-temp">30°C / 24°C</div>
+            <div class="day-rain">🌧️ 55%</div>
+            <div class="day-wind">💨 14 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Day 5</div>
+            <div class="day-condition">☀️</div>
+            <div class="day-temp">33°C / 25°C</div>
+            <div class="day-rain">🌧️ 15%</div>
+            <div class="day-wind">💨 8 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Day 6</div>
+            <div class="day-condition">☀️</div>
+            <div class="day-temp">34°C / 26°C</div>
+            <div class="day-rain">🌧️ 10%</div>
+            <div class="day-wind">💨 9 km/h</div>
+        </div>
+
+        <div class="farmer-day-card">
+            <div class="day-date">Day 7</div>
+            <div class="day-condition">⛅</div>
+            <div class="day-temp">31°C / 25°C</div>
+            <div class="day-rain">🌧️ 25%</div>
+            <div class="day-wind">💨 11 km/h</div>
+        </div>
+    </div>
+
+    <section class="farmer-chart-card" aria-labelledby="farmerTrendTitle">
+        <div class="chart-card-header">
+            <div>
+                <p class="chart-eyebrow">FIELD PLANNING VIEW</p>
+                <h2 id="farmerTrendTitle">Crop conditions outlook</h2>
+            </div>
+            <span class="chart-unit">°C / rain</span>
+        </div>
+        <div class="forecast-chart farmer-trend-chart">
+            <svg viewBox="0 0 640 250" role="img" aria-label="Farmer seven day temperature and rainfall outlook">
+                <g class="chart-grid"><line x1="48" y1="30" x2="620" y2="30"/><line x1="48" y1="82" x2="620" y2="82"/><line x1="48" y1="134" x2="620" y2="134"/><line x1="48" y1="186" x2="620" y2="186"/></g>
+                <g class="chart-axis-labels"><text x="8" y="35">36°</text><text x="8" y="87">32°</text><text x="8" y="139">28°</text><text x="8" y="191">24°</text></g>
+                <g class="rain-bars farmer-bars"><rect class="bar-safe" x="62" y="160" width="34" height="26" rx="8"/><rect class="bar-watch" x="142" y="147" width="34" height="39" rx="8"/><rect class="bar-danger" x="222" y="101" width="34" height="85" rx="8"/><rect class="bar-danger" x="302" y="114" width="34" height="72" rx="8"/><rect class="bar-watch" x="382" y="167" width="34" height="19" rx="8"/><rect class="bar-safe" x="462" y="173" width="34" height="13" rx="8"/><rect class="bar-watch" x="542" y="154" width="34" height="32" rx="8"/></g>
+                <path class="chart-line farmer-high-line" d="M79 82 L159 95 L239 121 L319 108 L399 69 L479 56 L559 95"/>
+                <path class="chart-line farmer-low-line" d="M79 173 L159 186 L239 186 L319 173 L399 160 L479 147 L559 173"/>
+                <g class="chart-points farmer-points"><circle cx="79" cy="82" r="4"/><circle cx="159" cy="95" r="4"/><circle cx="239" cy="121" r="4"/><circle cx="319" cy="108" r="4"/><circle cx="399" cy="69" r="4"/><circle cx="479" cy="56" r="4"/><circle cx="559" cy="95" r="4"/></g>
+                <g class="chart-labels"><text x="79" y="216">Today</text><text x="159" y="216">D2</text><text x="239" y="216">D3</text><text x="319" y="216">D4</text><text x="399" y="216">D5</text><text x="479" y="216">D6</text><text x="559" y="216">D7</text></g>
+            </svg>
+        </div>
+        <div class="chart-summary"><span><i class="status-pill danger">HIGH</i> Days 3–4 rainfall risk</span><span><i class="status-pill watch">MEDIUM</i> Day 7 heat watch</span><span><i class="status-pill safe">LOW</i> Days 1–2 safe</span></div>
+    </section>
+
+    <!-- Rainfall Alert -->
+    <div class="farmer-alert-box rainfall-alert">
+        <span class="alert-icon">🌧️</span>
+        <div>
+            <strong>High Rainfall Expected</strong>
+            <p>Day 3 & 4 will have significant rainfall. Avoid irrigation on those days.</p>
+        </div>
+    </div>
+
+    <!-- Frost/Drought Alert -->
+    <div class="farmer-alert-box drought-alert">
+        <span class="alert-icon">🌞</span>
+        <div>
+            <strong>Hot & Dry Ahead</strong>
+            <p>Days 5-7 will be hot. Increase watering for sensitive crops.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FARMER CHAT MODE SCREEN -->
+<section id="farmerChatScreen" class="screen hidden farmer-subscreen">
+    <div class="farmer-chat-header">
+        <div>
+            <p class="subtitle">Farmer Assistant</p>
+            <h1>Ask Your Questions</h1>
+        </div>
+        <button class="voice-toggle" id="voiceToggleBtn" title="Enable voice">🎤</button>
+    </div>
+
+    <div class="farmer-chat-body" id="farmerChatBody">
+        <div class="chat-date">Today</div>
+        
+        <div class="farmer-message farmer-ai-message">
+            <div class="message-avatar"><img src="farmer_chat_ai_pfp.png" alt="Farmer WeatherGPT"></div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <p>Hello! 👋 I am your farming assistant.</p>
+                    <p>Ask me:</p>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>Can I irrigate today?</li>
+                        <li>Which crop can be planted now?</li>
+                        <li>What should the soil moisture be?</li>
+                    </ul>
+                </div>
+                <small>Farmer Bot • Now</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="farmer-quick-questions">
+                <p>Common Questions</p>
+        <button class="quick-question" data-question="Can I irrigate today?">
+            💧 Irrigation timing?
+        </button>
+        <button class="quick-question" data-question="What are the best practices for my crop?">
+            🌱 Crop care
+        </button>
+        <button class="quick-question" data-question="When and how should I apply pesticide?">
+            🐛 Pest control
+        </button>
+        <button class="quick-question" data-question="How can I test my soil?">
+            🧪 Soil testing
+        </button>
+    </div>
+
+    <div class="farmer-chat-input-area">
+        <button class="input-action farmer-voice-btn" id="farmerVoiceBtn" title="Hold to record voice">
+            🎙️
+        </button>
+        <input
+            type="text"
+            id="farmerChatInput"
+            placeholder="अपना सवाल पूछें या बोलें..."
+            autocomplete="off"
+        >
+        <button class="send-button" id="farmerSendBtn">
+            ➤
+        </button>
+    </div>
+</section>
+
+<!-- FARMER ALERT MODE SCREEN -->
+<section id="farmerAlertScreen" class="screen hidden farmer-subscreen">
+    <div class="farmer-header">
+        <div>
+            <p class="subtitle">Farmer Alerts</p>
+            <h1>Weather & Crop Alerts</h1>
+            <p class="farmer-location">Critical information for your farm</p>
+        </div>
+        <span class="farmer-header-icon">⚠️</span>
+    </div>
+
+    <!-- Alert Summary -->
+    <div class="farmer-alert-summary">
+        <div class="alert-count critical">
+            <strong id="criticalAlertCount">2</strong>
+            <small>Critical</small>
+        </div>
+        <div class="alert-count warning">
+            <strong id="warningAlertCount">1</strong>
+            <small>Warnings</small>
+        </div>
+        <div class="alert-count info">
+            <strong id="infoAlertCount">3</strong>
+            <small>Information</small>
+        </div>
+    </div>
+
+    <!-- Alert Filter -->
+    <div class="farmer-alert-filters">
+        <button class="alert-filter-btn active" data-filter="all">All</button>
+        <button class="alert-filter-btn" data-filter="critical">Critical</button>
+        <button class="alert-filter-btn" data-filter="warning">Warning</button>
+        <button class="alert-filter-btn" data-filter="info">Info</button>
+    </div>
+
+    <!-- Alerts List -->
+    <div class="farmer-alerts-list" id="farmerAlertsList"><p class="empty-history">Loading verified alerts from the weather service...</p></div>
+
+    <!-- Abnormal Days -->
+    <div class="farmer-abnormal-days">
+        <h2>⚠️ Abnormal Weather Days</h2>
+        <div class="abnormal-days-grid" id="abnormalDaysGrid">
+            <div class="abnormal-day">
+                <strong>Day 3</strong>
+                <span>Heavy Rain</span>
+            </div>
+            <div class="abnormal-day">
+                <strong>Day 4</strong>
+                <span>Storm Warning</span>
+            </div>
+            <div class="abnormal-day">
+                <strong>Day 7</strong>
+                <span>High Temp</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="weatherHubScreen" class="screen hidden" aria-labelledby="weatherHubTitle">
+    <div class="forecast-header intelligence-header">
+        <div><p class="chart-eyebrow">WEATHER INTELLIGENCE</p><h1 id="weatherHubTitle">Weather Intelligence</h1></div>
+        <span class="location-badge" id="weatherHubLocation">📍 Ahmedabad</span>
+    </div>
+    <article class="weather-card intelligence-hero-card">
+        <p class="chart-eyebrow">OPERATIONAL BRIEFING</p><h2>🧠 Mission Briefing</h2>
+        <p id="weatherHubSummary">Loading live weather intelligence...</p>
+        <button class="primary-button" type="button" data-screen="missionBriefing">Generate Briefing <span>→</span></button>
+    </article>
+    <div class="weather-details intelligence-metrics"><div class="detail-card"><span>🌡️</span><small>Temperature</small><strong id="weatherHubTemperature">--</strong></div><div class="detail-card"><span>💨</span><small>Wind</small><strong id="weatherHubWind">--</strong></div><div class="detail-card"><span>🌧️</span><small>Rain probability</small><strong id="weatherHubRain">--</strong></div></div>
+    <div class="section-title"><h2>Explore Modes</h2><span>Choose an operation</span></div>
+    <div class="intelligence-mode-grid">
+        <button class="detail-card intelligence-mode-card" type="button" data-screen="aviation"><span>✈️</span><strong>Aviation</strong><small>Flight and airport risks</small></button>
+        <button class="detail-card intelligence-mode-card" type="button" data-screen="marine"><span>⚓</span><strong>Marine</strong><small>Sea state and vessel risks</small></button>
+    </div>
+    <article class="farmer-card intelligence-route-card">
+        <p class="chart-eyebrow">SMART ROUTING</p><h2>🗺️ Route Weather Intelligence</h2><p>Analyze weather along your path</p>
+        <button class="primary-button" type="button" data-screen="routeWeather">Analyze Route <span>→</span></button>
+    </article>
+</section>
+
+<section id="aviationScreen" class="screen hidden intelligence-screen" aria-labelledby="aviationTitle">
+    <div class="forecast-header intelligence-header"><div><p class="chart-eyebrow">AVIATION MODE</p><h1 id="aviationTitle">Ahmedabad Airport</h1></div><span class="location-badge">✈️ Live ops</span></div>
+    <label class="detail-card intelligence-selector">AIRPORT
+        <select id="aviationAirportSelect" aria-label="Select airport">
+            <option value="VAAH">Ahmedabad (VAAH)</option><option value="VABB">Mumbai (VABB)</option><option value="VIDP">Delhi (VIDP)</option><option value="VOGO">Goa (VOGO)</option><option value="VOBL">Bengaluru (VOBL)</option>
+        </select>
+    </label>
+    <article class="operational-briefing-card" data-operation="aviation">
+        <div class="operational-briefing-heading"><span>✈️</span><div><p class="chart-eyebrow">AVIATION BRIEFING</p><h2>Live flight conditions</h2><small id="aviationUpdated">Waiting for live data</small></div><strong id="aviationBriefingRisk">--</strong></div>
+        <div class="briefing-metrics">
+            <div><span>👁️</span><small>Visibility</small><strong id="aviationBriefingVisibility">--</strong></div>
+            <div><span>💨</span><small>Wind</small><strong id="aviationBriefingWind">--</strong></div>
+            <div><span>🌧️</span><small>Rain</small><strong id="aviationBriefingRain">--</strong></div>
+            <div><span>⛈️</span><small>Thunderstorm</small><strong id="aviationBriefingStorm">--</strong></div>
+        </div>
+        <p class="data-quality-note" id="aviationDataQuality">METAR / TAF: Waiting for live data</p>
+        <div class="briefing-summary"><p class="chart-eyebrow">AI SUMMARY</p><p id="aviationBriefingSummary">Generate a briefing to review the current aviation conditions.</p></div>
+        <button class="primary-button briefing-button" type="button" data-briefing="aviation">Generate Briefing <span>→</span></button>
+    </article>
+    <article class="alert-card intelligence-risk-card compact-intelligence-card"><div><p class="chart-eyebrow">OVERALL RISK</p><h2 id="aviationRiskScore">-- / 100</h2><strong id="aviationRiskLevel">WAITING</strong></div><span class="risk-icon">⚠️</span></article>
+    <article class="detail-card route-quick-link"><div><small>PRESET ROUTE</small><strong>Ahmedabad → Mumbai</strong></div><button class="quick-question" type="button" data-screen="routeWeather">Analyze Route</button></article>
+</section>
+
+<section id="marineScreen" class="screen hidden intelligence-screen" aria-labelledby="marineTitle">
+    <div class="forecast-header intelligence-header"><div><p class="chart-eyebrow">MARINE MODE</p><h1 id="marineTitle">Arabian Sea</h1></div><span class="location-badge">⚓ Live ops</span></div>
+    <article class="operational-briefing-card" data-operation="marine">
+        <div class="operational-briefing-heading"><span>🌊</span><div><p class="chart-eyebrow">MARINE BRIEFING</p><h2>Live sea conditions</h2><small id="marineUpdated">Waiting for live data</small></div><strong id="marineBriefingRisk">--</strong></div>
+        <div class="briefing-metrics">
+            <div><span>💨</span><small>Wind</small><strong id="marineBriefingWind">--</strong></div>
+            <div><span>🌊</span><small>Wave</small><strong id="marineBriefingWave">--</strong></div>
+            <div><span>🌧️</span><small>Rain</small><strong id="marineBriefingRain">--</strong></div>
+            <div><span>👁️</span><small>Visibility</small><strong id="marineBriefingVisibility">--</strong></div>
+        </div>
+        <div class="briefing-summary"><p class="chart-eyebrow">OVERALL</p><p id="marineBriefingSummary">Generate a briefing to review current marine conditions.</p><p class="briefing-main-factor"><strong>Main factor:</strong> <span id="marineBriefingFactor">--</span></p></div>
+        <button class="primary-button briefing-button" type="button" data-briefing="marine">Generate Briefing <span>→</span></button>
+    </article>
+    <article class="alert-card intelligence-risk-card compact-intelligence-card"><div><p class="chart-eyebrow">OVERALL RISK</p><h2 id="marineRiskScore">-- / 100</h2><strong id="marineRiskLevel">WAITING</strong></div><span class="risk-icon">🌊</span></article>
+    <article class="detail-card route-quick-link"><div><small>PRESET ROUTE</small><strong>Mumbai → Goa</strong></div><button class="quick-question" type="button" data-screen="routeWeather">Analyze Route</button></article>
+</section>
+
+<section id="routeWeatherScreen" class="screen hidden intelligence-screen" aria-labelledby="routeWeatherTitle">
+    <div class="forecast-header intelligence-header"><div><p class="chart-eyebrow">ROUTE WEATHER</p><h1 id="routeWeatherTitle">Route Intelligence</h1></div><span class="location-badge">🗺️ Planning</span></div>
+    <article class="detail-card route-input-card">
+        <label>FROM<input id="routeFrom" value="Ahmedabad"></label><label>TO<input id="routeTo" value="Mumbai"></label>
+        <div class="route-mode-pills" role="group" aria-label="Route mode"><button class="active" type="button" aria-pressed="true" data-mode="general">General</button><button type="button" aria-pressed="false" data-mode="aviation">✈ Aviation</button><button type="button" aria-pressed="false" data-mode="marine">⚓ Marine</button></div>
+        <button class="primary-button" type="button" id="analyzeRouteButton">Analyze Route</button>
+    </article>
+    <article class="route-journey-card">
+        <div><p class="chart-eyebrow">JOURNEY SNAPSHOT</p><h2 id="routeJourneyTitle">Ahmedabad <span>→</span> Mumbai</h2><p id="routeJourneyMeta">Analyze your route to calculate distance, travel time, and arrival weather.</p></div>
+        <div class="route-arrival-pill"><span>ARRIVAL WEATHER</span><strong id="routeArrivalHeadline">--</strong><small id="routeArrivalTime">--</small></div>
+    </article>
+    <article class="cyclone-map-card route-map-card"><div class="section-title"><h2>Live route weather</h2><span id="routeMapStatus">Enter a route to load weather</span></div><div id="routeMap" class="route-map" aria-label="Live route weather map"></div><div class="route-map-legend"><span><i class="route-legend-safe"></i> Lower risk</span><span><i class="route-legend-watch"></i> Watch</span><span><i class="route-legend-danger"></i> Higher risk</span></div></article>
+    <article class="alert-card route-analysis-card"><div class="route-risk-heading"><div><p class="chart-eyebrow">ROUTE RISK ANALYSIS</p><h2 id="routeRiskScore">-- <small id="routeRiskLevel">WAITING</small></h2></div><span id="routeRiskBadge" class="route-risk-badge">Awaiting route</span></div><p id="routeHazardSummary">Analyze a route to see weather hazards along the way.</p><div class="route-specs"><span>💨 Wind <b id="routeWindSummary">--</b></span><span>🌧️ Rain <b id="routeRainSummary">--</b></span><span>🕒 Arrival forecast <b id="routeArrivalForecast">--</b></span></div></article>
+    <article class="route-timeline-card"><div class="section-title"><h2>Route safety timeline</h2><span>Weather checkpoints</span></div><div id="routeSafetyTimeline" class="route-safety-timeline"><p class="route-empty-state">Analyze your route to see conditions at departure, midway, and arrival.</p></div></article>
+    <article class="forecast-ai intelligence-ai route-recommendation-card"><span>🤖</span><div><h3>AI route recommendation</h3><p id="routeRecommendationText">Your recommendation will appear after the route forecast is loaded.</p></div></article>
+    <div class="forecast-ai intelligence-ai"><span>🤖</span><div><h3>AI Route Briefing</h3><p id="routeBriefingText">Your route briefing will appear after live weather is loaded.</p><button class="quick-question" type="button" data-screen="missionBriefing">Open Mission Briefing</button></div></div>
+</section>
+
+<section id="missionBriefingScreen" class="screen hidden intelligence-screen" aria-labelledby="missionBriefingTitle">
+    <div class="forecast-header intelligence-header"><div><p class="chart-eyebrow">AI OPERATIONS CENTER</p><div class="mission-title-row"><h1 id="missionBriefingTitle">Mission Briefing</h1><span id="missionBriefingUpdated" class="mission-live-status"><i></i> Updating</span></div></div><span class="location-badge">📍 Ahmedabad</span></div>
+    <article class="weather-card mission-briefing-hero"><span class="mission-icon" aria-hidden="true"><svg viewBox="0 0 48 48" role="img"><circle cx="24" cy="24" r="16"></circle><circle cx="24" cy="24" r="7"></circle><path d="M24 3v6M24 39v6M3 24h6M39 24h6M9.2 9.2l4.2 4.2M34.6 34.6l4.2 4.2M38.8 9.2l-4.2 4.2M13.4 34.6l-4.2 4.2"></path></svg></span><h2>Operational weather summary</h2><p id="missionBriefingSummary">Loading live operational weather...</p><button class="primary-button" type="button" data-briefing="mission">Refresh Briefing <span>→</span></button></article>
+    <div class="section-title"><h2>Risk across operations</h2><span>Live domain assessment</span></div>
+    <div class="mission-risk-grid"><article class="detail-card mission-risk-card" data-domain="land"><span>🌾</span><strong>Land</strong><small id="missionLandRisk">Loading...</small></article><article class="detail-card mission-risk-card" data-domain="air"><span>✈️</span><strong>Air</strong><small id="missionAirRisk">Loading...</small></article><article class="detail-card mission-risk-card" data-domain="sea"><span>⚓</span><strong>Sea</strong><small id="missionSeaRisk">Loading...</small></article></div>
+    <div class="forecast-ai intelligence-ai"><span>🤖</span><div><h3>Recommended action</h3><p id="missionBriefingAction">Review the latest live briefing before starting operations.</p><button class="quick-question" type="button" data-screen="routeWeather">Plan a Route</button></div></div>
+</section>
+
+</main>
+
+        <!-- FLOATING BOTTOM NAVIGATION - NORMAL MODE -->
+        <nav class="bottom-nav" id="normalNav">
+
+            <button class="nav-item active" data-screen="home">
+
+                <span>🏠</span>
+
+                <small>Home</small>
+
+            </button>
+
+
+            <button class="nav-item" data-screen="forecast">
+
+                <span>🌤️</span>
+
+                <small>Forecast</small>
+
+            </button>
+
+
+            <button class="nav-item cyclone-nav-item" data-screen="cyclone">
+                <span>🌀</span>
+                <small>Cyclone</small>
+            </button>
+ 
+            <button class="nav-item" data-screen="alerts">
+ 
+                <span>⚠️</span>
+ 
+                <small>Alerts</small>
+ 
+            </button>
+
+
+            <button class="nav-item" id="framerNav" aria-label="Open Farmer Mode">
+
+              <span>🌾</span>
+
+              <small>Farmer</small>
+            </button>
+        </nav>
+
+        <!-- FLOATING BOTTOM NAVIGATION - FARMER MODE -->
+        <nav class="bottom-nav hidden" id="farmerNav">
+
+            <button class="nav-item active farmer-nav-item" data-farmer-mode="normal">
+                <span>🏠</span>
+                <small>Normal</small>
+            </button>
+
+            <button class="nav-item farmer-nav-item" data-farmer-mode="planning">
+                <span>📋</span>
+                <small>Planning</small>
+            </button>
+
+            <button class="nav-item farmer-nav-item" data-farmer-mode="forecast">
+                <span>🌤️</span>
+                <small>Forecast</small>
+            </button>
+
+            <button class="nav-item farmer-nav-item" data-farmer-mode="chat">
+                <span class="farmer-chat-nav-avatar"><img src="farmer_chat_ai_pfp.png" alt="Farmer AI chat"></span>
+                <small>Chat</small>
+            </button>
+
+            <button class="nav-item farmer-nav-item" data-farmer-mode="alerts">
+                <span>⚠️</span>
+                <small>Alerts</small>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- WEATHER MAP MODAL -->
+    <div class="weather-map-modal hidden" id="weatherMapModal">
+        <div class="map-header">
+            <div>
+                <h2>🗺️ Weather Map</h2>
+                <p>Live Weather Conditions</p>
+            </div>
+            <button class="map-close-btn" id="mapCloseBtn">✕</button>
+        </div>
+
+        <div class="map-container" id="mapContainer">
+            <!-- MAP VISUALIZATION -->
+            <div class="weather-map-grid">
+                <!-- Header Info -->
+                <div class="map-location-info">
+                    <div class="info-card">
+                        <span class="info-icon">📍</span>
+                        <div>
+                            <strong>Current Location</strong>
+                            <p id="weatherMapLocationName">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temperature Zones -->
+                <div class="map-section">
+                    <h3>🌡️ Temperature Map</h3>
+                    <div class="temp-zones">
+                        <div class="temp-zone hot">
+                            <span id="weatherMapTempHot">--</span>
+                            <small id="weatherMapTempHotLabel">Waiting for live data</small>
+                        </div>
+                        <div class="temp-zone warm">
+                            <span id="weatherMapTempWarm">--</span>
+                            <small id="weatherMapTempWarmLabel">Waiting for live data</small>
+                        </div>
+                        <div class="temp-zone cool">
+                            <span id="weatherMapTempCool">--</span>
+                            <small id="weatherMapTempCoolLabel">Waiting for live data</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rainfall Map -->
+                <div class="map-section">
+                    <h3>🌧️ Rainfall Map</h3>
+                    <div class="rainfall-zones">
+                        <div class="rainfall-zone heavy">
+                            <span id="weatherMapRainHigh">--</span>
+                            <small id="weatherMapRainHighAmount">--</small>
+                            <p id="weatherMapRainHighDetail">Waiting for live forecast</p>
+                        </div>
+                        <div class="rainfall-zone moderate">
+                            <span id="weatherMapRainModerate">--</span>
+                            <small id="weatherMapRainModerateAmount">--</small>
+                            <p id="weatherMapRainModerateDetail">Waiting for live forecast</p>
+                        </div>
+                        <div class="rainfall-zone light">
+                            <span id="weatherMapRainLight">--</span>
+                            <small id="weatherMapRainLightAmount">--</small>
+                            <p id="weatherMapRainLightDetail">Waiting for live forecast</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Alerts on Map -->
+                <div class="map-section">
+                    <h3>⚠️ Alert Zones</h3>
+                    <div class="alert-zones">
+                        <div class="alert-zone critical">
+                            <span id="weatherMapAlertCritical">--</span>
+                            <small id="weatherMapAlertCriticalDetail">Waiting for live alerts</small>
+                        </div>
+                        <div class="alert-zone warning">
+                            <span id="weatherMapAlertWarning">--</span>
+                            <small id="weatherMapAlertWarningDetail">Waiting for live alerts</small>
+                        </div>
+                        <div class="alert-zone info">
+                            <span id="weatherMapAlertInfo">--</span>
+                            <small id="weatherMapAlertInfoDetail">Waiting for live alerts</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wind Speed -->
+                <div class="map-section">
+                    <h3>💨 Wind Speed</h3>
+                    <div class="wind-info">
+                        <div class="wind-card">
+                            <strong id="weatherMapWindCurrent">--</strong>
+                            <small>Current Wind Speed</small>
+                        </div>
+                        <div class="wind-card">
+                            <strong id="weatherMapWindMax">--</strong>
+                            <small>Max Speed (Day 4)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Humidity Map -->
+                <div class="map-section">
+                    <h3>💧 Humidity Map</h3>
+                    <div class="humidity-bar">
+                        <div class="humidity-level" id="weatherMapHumidityLevel" style="width: 0%;">
+                            <strong id="weatherMapHumidityValue">--</strong>
+                        </div>
+                    </div>
+                    <small style="color: #718096;">Current Moisture Level</small>
+                </div>
+
+                <!-- Near Nearby Areas (Farmer Mode) -->
+                <div class="map-section">
+                    <h3>📍 Nearby Areas</h3>
+                    <div class="nearby-areas">
+                        <div class="area-card">
+                            <strong id="weatherMapNearbyName1">--</strong>
+                            <span id="weatherMapNearbyTemp1">--</span>
+                            <small id="weatherMapNearbyDistance1">--</small>
+                        </div>
+                        <div class="area-card">
+                            <strong id="weatherMapNearbyName2">--</strong>
+                            <span id="weatherMapNearbyTemp2">--</span>
+                            <small id="weatherMapNearbyDistance2">--</small>
+                        </div>
+                        <div class="area-card">
+                            <strong id="weatherMapNearbyName3">--</strong>
+                            <span id="weatherMapNearbyTemp3">--</span>
+                            <small id="weatherMapNearbyDistance3">--</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
