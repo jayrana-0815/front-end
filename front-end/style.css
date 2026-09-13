@@ -3572,6 +3572,30 @@ body {
     .mission-live-status i { animation: none; }
 }
 
+#alertsScreen .alert-summary,
+#alertsScreen .alert-filters,
+#alertsScreen > .alert-card {
+    display: none;
+}
+
+.route-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.route-actions .secondary-button {
+    min-height: 42px;
+    padding: 0 16px;
+}
+
+.cyclone-leaflet-map,
+.cyclone-leaflet-map .leaflet-container {
+    min-height: 280px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
 #mobileMenu { max-height: calc(100vh - 95px); overflow-y: auto; }
 .menu-title { padding: 4px 12px 12px; color: #f8fafc; font-size: 12px; font-weight: 800; letter-spacing: .8px; }
 .menu-section-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 2px 0 7px; padding: 10px 12px; border: 0; border-bottom: 1px solid rgba(255,255,255,.12); background: transparent; color: #93c5fd; text-align: left; cursor: pointer; }

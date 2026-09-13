@@ -789,7 +789,7 @@
     <div class="cyclone-map-card">
         <div class="section-title"><h2>Tracking map</h2><span>Live base map</span></div>
         <div class="cyclone-map-wrap">
-            <iframe id="cycloneMap" title="Cyclone tracking map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=68.8%2C20.0%2C77.0%2C24.8&layer=mapnik"></iframe>
+            <div id="cycloneMap" class="cyclone-leaflet-map" aria-label="Live cyclone tracking map"></div>
             <div class="map-empty-note" id="cycloneMapNote">No verified track to plot</div>
         </div>
         <div class="path-key"><span>• Historical path</span><span>• Predicted path</span><span>Track appears only with official data</span></div>
@@ -1200,9 +1200,8 @@
         <span class="location-badge" id="weatherHubLocation">📍 Ahmedabad</span>
     </div>
     <article class="weather-card intelligence-hero-card">
-        <p class="chart-eyebrow">OPERATIONAL BRIEFING</p><h2>🧠 Mission Briefing</h2>
+        <p class="chart-eyebrow">LIVE WEATHER SUMMARY</p><h2>Current conditions</h2>
         <p id="weatherHubSummary">Loading live weather intelligence...</p>
-        <button class="primary-button" type="button" data-screen="missionBriefing">Generate Briefing <span>→</span></button>
     </article>
     <div class="weather-details intelligence-metrics"><div class="detail-card"><span>🌡️</span><small>Temperature</small><strong id="weatherHubTemperature">--</strong></div><div class="detail-card"><span>💨</span><small>Wind</small><strong id="weatherHubWind">--</strong></div><div class="detail-card"><span>🌧️</span><small>Rain probability</small><strong id="weatherHubRain">--</strong></div></div>
     <div class="section-title"><h2>Explore Modes</h2><span>Choose an operation</span></div>
@@ -1261,7 +1260,7 @@
     <article class="detail-card route-input-card">
         <label>FROM<input id="routeFrom" value="Ahmedabad"></label><label>TO<input id="routeTo" value="Mumbai"></label>
         <div class="route-mode-pills" role="group" aria-label="Route mode"><button class="active" type="button" aria-pressed="true" data-mode="general">General</button><button type="button" aria-pressed="false" data-mode="aviation">✈ Aviation</button><button type="button" aria-pressed="false" data-mode="marine">⚓ Marine</button></div>
-        <button class="primary-button" type="button" id="analyzeRouteButton">Analyze Route</button>
+        <div class="route-actions"><button class="primary-button" type="button" id="analyzeRouteButton">Analyze Route</button><button class="secondary-button" type="button" id="resetRouteButton">Reset</button></div>
     </article>
     <article class="route-journey-card">
         <div><p class="chart-eyebrow">JOURNEY SNAPSHOT</p><h2 id="routeJourneyTitle">Ahmedabad <span>→</span> Mumbai</h2><p id="routeJourneyMeta">Analyze your route to calculate distance, travel time, and arrival weather.</p></div>
@@ -1271,15 +1270,7 @@
     <article class="alert-card route-analysis-card"><div class="route-risk-heading"><div><p class="chart-eyebrow">ROUTE RISK ANALYSIS</p><h2 id="routeRiskScore">-- <small id="routeRiskLevel">WAITING</small></h2></div><span id="routeRiskBadge" class="route-risk-badge">Awaiting route</span></div><p id="routeHazardSummary">Analyze a route to see weather hazards along the way.</p><div class="route-specs"><span>💨 Wind <b id="routeWindSummary">--</b></span><span>🌧️ Rain <b id="routeRainSummary">--</b></span><span>🕒 Arrival forecast <b id="routeArrivalForecast">--</b></span></div></article>
     <article class="route-timeline-card"><div class="section-title"><h2>Route safety timeline</h2><span>Weather checkpoints</span></div><div id="routeSafetyTimeline" class="route-safety-timeline"><p class="route-empty-state">Analyze your route to see conditions at departure, midway, and arrival.</p></div></article>
     <article class="forecast-ai intelligence-ai route-recommendation-card"><span>🤖</span><div><h3>AI route recommendation</h3><p id="routeRecommendationText">Your recommendation will appear after the route forecast is loaded.</p></div></article>
-    <div class="forecast-ai intelligence-ai"><span>🤖</span><div><h3>AI Route Briefing</h3><p id="routeBriefingText">Your route briefing will appear after live weather is loaded.</p><button class="quick-question" type="button" data-screen="missionBriefing">Open Mission Briefing</button></div></div>
-</section>
-
-<section id="missionBriefingScreen" class="screen hidden intelligence-screen" aria-labelledby="missionBriefingTitle">
-    <div class="forecast-header intelligence-header"><div><p class="chart-eyebrow">AI OPERATIONS CENTER</p><div class="mission-title-row"><h1 id="missionBriefingTitle">Mission Briefing</h1><span id="missionBriefingUpdated" class="mission-live-status"><i></i> Updating</span></div></div><span class="location-badge">📍 Ahmedabad</span></div>
-    <article class="weather-card mission-briefing-hero"><span class="mission-icon" aria-hidden="true"><svg viewBox="0 0 48 48" role="img"><circle cx="24" cy="24" r="16"></circle><circle cx="24" cy="24" r="7"></circle><path d="M24 3v6M24 39v6M3 24h6M39 24h6M9.2 9.2l4.2 4.2M34.6 34.6l4.2 4.2M38.8 9.2l-4.2 4.2M13.4 34.6l-4.2 4.2"></path></svg></span><h2>Operational weather summary</h2><p id="missionBriefingSummary">Loading live operational weather...</p><button class="primary-button" type="button" data-briefing="mission">Refresh Briefing <span>→</span></button></article>
-    <div class="section-title"><h2>Risk across operations</h2><span>Live domain assessment</span></div>
-    <div class="mission-risk-grid"><article class="detail-card mission-risk-card" data-domain="land"><span>🌾</span><strong>Land</strong><small id="missionLandRisk">Loading...</small></article><article class="detail-card mission-risk-card" data-domain="air"><span>✈️</span><strong>Air</strong><small id="missionAirRisk">Loading...</small></article><article class="detail-card mission-risk-card" data-domain="sea"><span>⚓</span><strong>Sea</strong><small id="missionSeaRisk">Loading...</small></article></div>
-    <div class="forecast-ai intelligence-ai"><span>🤖</span><div><h3>Recommended action</h3><p id="missionBriefingAction">Review the latest live briefing before starting operations.</p><button class="quick-question" type="button" data-screen="routeWeather">Plan a Route</button></div></div>
+    <div class="forecast-ai intelligence-ai"><span>🤖</span><div><h3>AI Route Briefing</h3><p id="routeBriefingText">Your route briefing will appear after live weather is loaded.</p></div></div>
 </section>
 
 </main>
@@ -1382,113 +1373,6 @@
                     </div>
                 </div>
 
-                <!-- Temperature Zones -->
-                <div class="map-section">
-                    <h3>🌡️ Temperature Map</h3>
-                    <div class="temp-zones">
-                        <div class="temp-zone hot">
-                            <span id="weatherMapTempHot">--</span>
-                            <small id="weatherMapTempHotLabel">Waiting for live data</small>
-                        </div>
-                        <div class="temp-zone warm">
-                            <span id="weatherMapTempWarm">--</span>
-                            <small id="weatherMapTempWarmLabel">Waiting for live data</small>
-                        </div>
-                        <div class="temp-zone cool">
-                            <span id="weatherMapTempCool">--</span>
-                            <small id="weatherMapTempCoolLabel">Waiting for live data</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Rainfall Map -->
-                <div class="map-section">
-                    <h3>🌧️ Rainfall Map</h3>
-                    <div class="rainfall-zones">
-                        <div class="rainfall-zone heavy">
-                            <span id="weatherMapRainHigh">--</span>
-                            <small id="weatherMapRainHighAmount">--</small>
-                            <p id="weatherMapRainHighDetail">Waiting for live forecast</p>
-                        </div>
-                        <div class="rainfall-zone moderate">
-                            <span id="weatherMapRainModerate">--</span>
-                            <small id="weatherMapRainModerateAmount">--</small>
-                            <p id="weatherMapRainModerateDetail">Waiting for live forecast</p>
-                        </div>
-                        <div class="rainfall-zone light">
-                            <span id="weatherMapRainLight">--</span>
-                            <small id="weatherMapRainLightAmount">--</small>
-                            <p id="weatherMapRainLightDetail">Waiting for live forecast</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Weather Alerts on Map -->
-                <div class="map-section">
-                    <h3>⚠️ Alert Zones</h3>
-                    <div class="alert-zones">
-                        <div class="alert-zone critical">
-                            <span id="weatherMapAlertCritical">--</span>
-                            <small id="weatherMapAlertCriticalDetail">Waiting for live alerts</small>
-                        </div>
-                        <div class="alert-zone warning">
-                            <span id="weatherMapAlertWarning">--</span>
-                            <small id="weatherMapAlertWarningDetail">Waiting for live alerts</small>
-                        </div>
-                        <div class="alert-zone info">
-                            <span id="weatherMapAlertInfo">--</span>
-                            <small id="weatherMapAlertInfoDetail">Waiting for live alerts</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Wind Speed -->
-                <div class="map-section">
-                    <h3>💨 Wind Speed</h3>
-                    <div class="wind-info">
-                        <div class="wind-card">
-                            <strong id="weatherMapWindCurrent">--</strong>
-                            <small>Current Wind Speed</small>
-                        </div>
-                        <div class="wind-card">
-                            <strong id="weatherMapWindMax">--</strong>
-                            <small>Max Speed (Day 4)</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Humidity Map -->
-                <div class="map-section">
-                    <h3>💧 Humidity Map</h3>
-                    <div class="humidity-bar">
-                        <div class="humidity-level" id="weatherMapHumidityLevel" style="width: 0%;">
-                            <strong id="weatherMapHumidityValue">--</strong>
-                        </div>
-                    </div>
-                    <small style="color: #718096;">Current Moisture Level</small>
-                </div>
-
-                <!-- Near Nearby Areas (Farmer Mode) -->
-                <div class="map-section">
-                    <h3>📍 Nearby Areas</h3>
-                    <div class="nearby-areas">
-                        <div class="area-card">
-                            <strong id="weatherMapNearbyName1">--</strong>
-                            <span id="weatherMapNearbyTemp1">--</span>
-                            <small id="weatherMapNearbyDistance1">--</small>
-                        </div>
-                        <div class="area-card">
-                            <strong id="weatherMapNearbyName2">--</strong>
-                            <span id="weatherMapNearbyTemp2">--</span>
-                            <small id="weatherMapNearbyDistance2">--</small>
-                        </div>
-                        <div class="area-card">
-                            <strong id="weatherMapNearbyName3">--</strong>
-                            <span id="weatherMapNearbyTemp3">--</span>
-                            <small id="weatherMapNearbyDistance3">--</small>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

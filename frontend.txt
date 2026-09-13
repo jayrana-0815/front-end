@@ -1,0 +1,213 @@
+WeatherGPT Frontend Guide
+=========================
+
+Purpose
+-------
+
+The frontend is a framework-free HTML, CSS, and JavaScript client for the
+WeatherGPT FastAPI service. It is designed as a mobile-sized weather dashboard
+with normal weather tools, farmer tools, location search, multilingual labels,
+weather maps, alerts, and AI chat.
+
+Frontend files
+--------------
+
+front-end/index.html
+    Defines the page markup, screen containers, form controls, chart/map
+    placeholders, navigation, and external browser-library links. It includes
+    style.css and script.js with relative paths.
+
+front-end/style.css
+    Contains the complete visual system: layout, cards, typography, colors,
+    navigation, charts, chat bubbles, farmer views, modals, loading states,
+    accessibility helpers, and responsive media queries. There is no CSS
+    preprocessor or build step.
+
+front-end/script.js
+    Owns client state, event listeners, rendering, API requests, navigation,
+    localization, voice input, chat, text-to-speech, weather maps, and farmer
+    workflows. It uses browser APIs and standard fetch calls.
+
+front-end/ai-avatar.png
+    Avatar image used by the normal and farmer chat interfaces.
+
+HTML structure
+--------------
+
+The page is a single document. The `.app` wrapper contains the top bar,
+location toolbar, main content screens, and bottom navigation.
+
+Normal screens:
+
+* `homeScreen` shows current weather, a weather scene, summary metrics, quick
+  chat questions, and the normal WeatherGPT chat panel.
+* `forecastScreen` shows the current location summary, hourly forecast,
+  seven-day forecast, trend charts, and forecast-related AI content.
+* `alertsScreen` shows weather and early-warning information.
+* `cycloneScreen` shows cyclone status, tracking information, a map iframe,
+  and safety guidance.
+
+Farmer screens:
+
+* `farmerScreen` is the farmer dashboard and crop/advisory entry point.
+* `farmerForecastScreen` contains the farmer-specific forecast and planning
+  views.
+* `farmerChatScreen` provides farmer-focused AI chat and quick questions.
+* `farmerAlertScreen` provides farmer alert filters and alert cards.
+
+The document also contains language controls, weather-map modal markup, chart
+SVGs, and forms used by the JavaScript renderer. Screens are switched by
+adding or removing the `hidden` class; this is a single-page interface rather
+than a collection of browser routes.
+
+External browser dependencies
+-----------------------------
+
+`index.html` loads Leaflet 1.9.4 from unpkg for interactive weather maps.
+The Leaflet stylesheet is loaded in the head and the Leaflet script is loaded
+before `script.js` at the end of the body.
+
+The cyclone view embeds an OpenStreetMap export iframe. Radar tile metadata
+comes from the backend RainViewer integration. These providers need network
+access when the related view or map is used.
+
+CSS organization
+----------------
+
+The stylesheet is organized by visual area and feature rather than by a
+component framework. The main conventions are:
+
+* `.app` provides the centered mobile-width shell and bottom padding.
+* `.screen` and `.hidden` control screen visibility.
+* Shared card, section-title, button, form, chart, and status styles are reused
+  across normal and farmer views.
+* Weather scene classes and data attributes support the animated sunny, cloudy,
+  rainy, and snowy presentation.
+* Chat styles cover message bubbles, avatars, quick questions, thinking states,
+  voice controls, and farmer chat variants.
+* Farmer, cyclone, alerts, map, and planning selectors are grouped in their
+  respective feature sections.
+* Media queries adapt the layout for narrow screens and keep controls usable
+  on small devices.
+
+When adding markup, prefer existing semantic classes and IDs used by the
+renderer. When adding a new state, use a class or data attribute instead of
+inline style changes unless the value is genuinely dynamic.
+
+JavaScript state and rendering
+------------------------------
+
+The script starts with default Ahmedabad weather/location data so the page has
+a useful initial state before the first request completes. Important state
+includes:
+
+* `weatherData` for current conditions and summary metrics.
+* `farmerLocation` for farmer-specific latitude, longitude, and display name.
+* `latestForecast` for the most recent weather response.
+* `isFarmerMode` and the current language selection.
+* `chatHistory` and `farmerChatHistory` for the two chat experiences.
+
+`API_BASE` uses `window.WEATHER_API_BASE` when supplied. Otherwise it uses the
+current origin when served by FastAPI, or `http://localhost:3000` for a
+`file:` preview.
+
+Main client flows:
+
+1. `loadWeatherData()` requests current weather, updates the home summary, and
+   renders normal forecast cards and charts.
+2. Location search calls the search endpoint, renders selectable results, and
+   reloads weather data after a location is selected.
+3. Reverse geocoding supports browser geolocation and updates the displayed
+   location labels.
+4. `showScreen()` controls normal navigation. Farmer mode has separate
+   navigation and subscreen handling.
+5. `setLanguage()` persists the selected language in localStorage and
+   translates the supported page labels. Supported keys include English,
+   Hindi, Gujarati, Marathi, Kannada, Tamil, and Bengali.
+6. Farmer functions load agricultural plans, farmer forecasts, cyclone data,
+   and alerts, then render loading, empty, error, or success states.
+7. Normal and farmer chat send messages to the chat endpoint and append
+   escaped, formatted replies to their respective message containers.
+8. Voice controls use browser speech recognition when available. Speech
+   playback first tries backend TTS and falls back to browser speech synthesis
+   when backend TTS is unavailable.
+9. The Leaflet map flow requests radar metadata, creates map layers, and
+   supports selecting a location for detailed weather.
+
+Backend API integration
+-----------------------
+
+The browser talks to the FastAPI routes in `main.py`. Location coordinates and
+the display name are sent as query parameters where applicable.
+
+GET endpoints:
+
+* `/api/health` - service health check.
+* `/api/location/search?q=...` - location search suggestions.
+* `/api/location/reverse?lat=...&lon=...` - reverse geocoding.
+* `/api/weather/current?lat=...&lon=...&name=...` - current conditions,
+  hourly data, daily forecast, alerts, and related weather payloads.
+* `/api/weather/alerts?lat=...&lon=...&name=...` - alert-only response.
+* `/api/weather/radar-maps` - RainViewer radar and satellite tile metadata.
+* `/api/cyclones` - cyclone data used by the tracking screen.
+* `/api/climate/trends?lat=...&lon=...&name=...` - climate trend data.
+
+POST endpoints:
+
+* `/api/advisory/agriculture` - crop and location-based farmer advisory.
+* `/api/advisory/travel` - travel advisory for an origin and destination.
+* `/api/chat` - normal and farmer AI weather chat.
+* `/api/tts` - WAV audio for reply text, language, and speaker settings.
+
+Requests should check `response.ok` and surface a user-visible status or
+notification on failure. Do not expose provider API keys in browser code; the
+backend owns Gemini, Sarvam, weather-provider, and RainViewer credentials and
+fallback behavior.
+
+Running the frontend
+--------------------
+
+From the repository root, install the Python dependencies and start FastAPI:
+
+    python -m venv .venv
+    .venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+    python -m uvicorn main:app --host 0.0.0.0 --port 3000 --reload
+
+Open `http://localhost:3000` in a browser. FastAPI serves the files in
+`front-end/` and supplies the API at the same origin. This is the recommended
+mode because live weather, location search, maps, and chat all work together.
+
+For a local file preview, open `front-end/index.html` directly. The script
+will target `http://localhost:3000`, so the FastAPI server must still be
+running for live data. Some browser security policies may restrict network
+requests from a `file:` page; use the FastAPI URL when that occurs.
+
+Validation checklist
+--------------------
+
+* Confirm the page loads without console errors and that `style.css` and
+  `script.js` resolve relative to `index.html`.
+* Search for a city and select a result; verify that the location labels and
+  weather cards update.
+* Open forecast, alerts, cyclone, and farmer views and verify loading and
+  empty/error states.
+* Send a normal and farmer chat message. Verify that failed requests produce a
+  visible status instead of a silent success.
+* Change language, reload the page, and verify the selected language persists.
+* Test voice input and speech playback where browser permissions and backend
+  TTS configuration are available.
+* Open the weather map and confirm that Leaflet and radar tile layers load.
+* Run the backend checks from README.md:
+
+    python -m compileall main.py weather_service.py gemini_service.py weather_codes.py
+    python -c "from fastapi.testclient import TestClient; from main import app; print(TestClient(app).get('/api/health').json())"
+
+Configuration notes
+-------------------
+
+`GEMINI_API_KEY` enables Gemini-backed chat responses and `SARVAM_API_KEY`
+enables backend text-to-speech. Both are optional. Without them, the backend
+provides local chat behavior or an explicit TTS failure/fallback path.
+Configure these values in `.env`; never put them in `script.js` or commit the
+`.env` file.

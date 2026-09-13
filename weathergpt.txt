@@ -1,0 +1,214 @@
+WeatherGPT Project Handoff
+==========================
+
+Purpose
+-------
+WeatherGPT is a framework-free weather intelligence web app for Indian users.
+It provides current weather, hourly and 7-day forecasts, alerts, cyclone
+information, maps, farmer mode, multilingual chat, microphone input, and
+optional Sarvam text-to-speech.
+
+Project layout
+--------------
+- main.py
+  FastAPI application. Serves the frontend and exposes all /api endpoints.
+- weather_service.py
+  Open-Meteo weather/geocoding integration, caching, forecast shaping,
+  meteorological alerts, cyclone data, agriculture advisory, and travel data.
+- gemini_service.py
+  Gemini chat integration with a telemetry-grounded local fallback.
+  Detects Indian languages and creates language-aware responses.
+- sarvam.py
+  Server-side Sarvam AI text-to-speech client.
+- weather_codes.py
+  Open-Meteo weather-code descriptions.
+- front-end/index.html
+  Single-page HTML interface containing normal mode and farmer mode screens.
+- front-end/script.js
+  Navigation, API calls, location handling, chat, speech recognition,
+  Sarvam audio playback, language menu, farmer mode, alerts, and maps.
+- front-end/style.css
+  Complete responsive visual styling and animations.
+- front-end/ai-avatar.png
+  AI avatar used inside chat messages.
+- requirements.txt
+  Python dependencies.
+- .env.example
+  Configuration template. Copy to .env and never commit real secrets.
+
+Run locally
+-----------
+1. Use Python 3.10 or newer.
+2. Create and activate a virtual environment:
+
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+
+3. Install dependencies:
+
+   pip install -r requirements.txt
+
+4. Copy configuration:
+
+   copy .env.example .env
+
+5. Add keys when needed:
+
+   GEMINI_API_KEY=...
+   SARVAM_API_KEY=...
+
+6. Start the server:
+
+   python -m uvicorn main:app --host 0.0.0.0 --port 3000 --reload
+
+7. Open:
+
+   http://localhost:3000
+
+Important: open the app through FastAPI. Do not open index.html directly when
+testing live API calls.
+
+Environment variables
+---------------------
+- GEMINI_API_KEY: optional Gemini API key for natural-language answers.
+- GEMINI_MODEL: Gemini model name; default is gemini-2.5-flash.
+- SARVAM_API_KEY: optional server-side Sarvam API key for TTS.
+- SARVAM_TTS_MODEL: Sarvam model; default is bulbul:v3.
+- HOST: server host; default is 0.0.0.0.
+- PORT: documented default port is 3000.
+- RELOAD: reload setting used by local tooling.
+- CORS_ORIGINS: comma-separated CORS origins; default is *.
+
+Backend API
+-----------
+- GET  /api/health
+- GET  /api/location/search?q=...
+- GET  /api/location/reverse?lat=...&lon=...
+- GET  /api/weather/current?lat=...&lon=...&name=...
+- GET  /api/weather/alerts?lat=...&lon=...&name=...
+- GET  /api/weather/radar-maps
+- GET  /api/cyclones
+- GET  /api/climate/trends?lat=...&lon=...&name=...
+- POST /api/advisory/agriculture
+- POST /api/advisory/travel
+- POST /api/chat
+- POST /api/tts
+
+Chat behavior
+-------------
+Normal and farmer chat call POST /api/chat with:
+
+{
+  "message": "What weather is expected in Ahmedabad?",
+  "language": "en",
+  "currentLocation": {
+    "name": "Ahmedabad",
+    "latitude": 23.0225,
+    "longitude": 72.5714
+  }
+}
+
+The backend:
+- resolves common city names mentioned in the question;
+- fetches current and forecast telemetry;
+- sends the question plus telemetry to Gemini when GEMINI_API_KEY exists;
+- requests a response in the selected/detected Indian language;
+- uses a deterministic weather/crop fallback when Gemini is unavailable.
+
+Farmer chat recognizes crop questions in Hindi and English and gives cautious
+weather-based guidance for millet, groundnut, cotton, rice, wheat, and irrigated
+vegetables. It should also remind users to verify soil, irrigation, season, and
+local agriculture department guidance.
+
+Speech behavior
+---------------
+- Microphone input uses browser SpeechRecognition or webkitSpeechRecognition.
+- The selected menu language controls the speech locale.
+- The AI reply speaker button calls POST /api/tts.
+- sarvam.py calls Sarvam server-side with bulbul:v3 and the default speaker
+  priya.
+- If Sarvam is unavailable, the browser falls back to SpeechSynthesis.
+- SARVAM_API_KEY must remain server-side and must never be placed in JavaScript.
+
+Frontend behavior
+-----------------
+- The hamburger menu opens navigation, language selection, map access, and
+  farmer mode.
+- The Language row is a real button with an expandable language panel and arrow.
+- The floating map button was removed; Weather Map is available through the
+  hamburger menu.
+- Current location is stored in localStorage under weatherGptLocation.
+- Selected language is stored under weatherGptLanguage.
+- Weather data is loaded from /api/weather/current and reused by the dashboard,
+  normal forecast, and farmer forecast. Changing the saved location reloads
+  current weather plus normal hourly/7-day cards and farmer cards.
+- Normal Forecast hourly cards and seven-day cards are rendered from the live
+  `hourly` and `daily` response rather than fixed sample values. Opening the
+  normal Forecast screen also refreshes the endpoint for the current location.
+- Farmer Forecast now explicitly refreshes /api/weather/current when the
+  Farmer Forecast screen opens, then renders live seven-day cards.
+- Farmer Forecast cards display backend day name/date, weather-code icon,
+  maximum/minimum temperature, rain probability, and maximum wind.
+- Farmer forecast alert cards calculate the wettest and hottest days from the
+  same live seven-day response.
+- Open-Meteo hourly data includes soil_moisture_0_to_7cm. The backend exposes
+  current.soilMoisture as a percentage, and the farmer planning field displays
+  this value as read-only instead of asking the user to enter it.
+- Farmer planning crop choices include wheat, rice, cotton, vegetables, millet,
+  and groundnut, with emoji labels.
+- Choosing "No, show seasonal advice" hides the manual crop/growth/soil form
+  and shows the seasonal planner. The seasonal planner has its own language
+  selector and localized advice for Hindi, Gujarati, Marathi, Kannada, Tamil,
+  and Bengali.
+- The farmer planning form has a compact language button above the crop fields.
+  It controls the shared planning language and immediately rebuilds the plan.
+  Plan summary labels, task cards, priorities, weather actions, and seasonal
+  instructions are localized together; crop emojis remain part of crop labels.
+- Normal WeatherGPT and Farmer AI keep separate browser-side conversation
+  histories and send explicit `mode` values to `/api/chat`, so switching modes
+  cannot reuse the other assistant's previous answer.
+- Farmer AI replies include a speaker button and use the selected language
+  when calling /api/chat and /api/tts.
+- Farmer AI uses Groq when `GROQ_API_KEY` is configured. The key is used only
+  server-side for the Groq authorization header and is never exposed to the
+  browser.
+- Farmer chat microphone input is a single-click toggle (click once to listen,
+  click again to stop), uses the selected Indian-language speech locale, and
+  submits one recognized transcript per recording.
+- Chat loading indicators use the text "Checking the skies".
+
+Supported language codes
+------------------------
+en, hi, gu, mr, kn, ta, bn, te, ml, pa, or
+
+Validation commands
+------------------
+python -m compileall main.py sarvam.py gemini_service.py weather_service.py weather_codes.py
+node --check front-end\script.js
+python -c "from fastapi.testclient import TestClient; from main import app; print(TestClient(app).get('/api/health').json())"
+
+Development rules
+-----------------
+- Keep provider keys in .env only.
+- Preserve explicit API errors; do not silently hide provider failures.
+- Reuse existing weather_service and cache logic before adding new providers.
+- Keep the frontend framework-free unless a deliberate migration is requested.
+- Keep AI avatar image usage limited to chat unless the product requirement
+  changes.
+- When changing API response shapes, update both main.py/service code and the
+  consuming frontend code.
+- Test both English and at least one Indian language after chat changes.
+- Test farmer crop questions and the speaker button after speech/chat changes.
+- Test Farmer Forecast after changing location; it must show a loading state,
+  then live cards or an explicit error state.
+- Test seasonal planning in English and one selected Indian language.
+
+Known provider limitations
+--------------------------
+- Open-Meteo, geocoding, RainViewer, Gemini, and Sarvam are external services.
+- Gemini and Sarvam require valid API keys and network access.
+- Browser speech recognition support varies by browser.
+- Open-Meteo may return more than seven daily entries; the farmer UI displays
+  the first seven entries.
+- Cyclone data is currently shaped by the existing weather service and should
+  be verified before presenting it as an official emergency warning.

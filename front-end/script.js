@@ -305,6 +305,24 @@ const translations = {
         "Normal": "সাধারণ",
         "Planning": "পরিকল্পনা",
         "Chat": "চ্যাট"
+    },
+    te: {
+        "Forecast": "వాతావరణ సూచన",
+        "Alerts": "హెచ్చరికలు",
+        "Farmer": "రైతు",
+        "Home": "హోమ్",
+        "Language": "భాష",
+        "Farmer Mode": "రైతు మోడ్",
+        "Weather Forecast": "వాతావరణ సూచన",
+        "Hourly Forecast": "గంటవారీ సూచన",
+        "7-Day Forecast": "7 రోజుల సూచన",
+        "Normal": "సాధారణ",
+        "Planning": "ప్రణాళిక",
+        "Chat": "చాట్",
+        "Humidity": "తేమ",
+        "Wind": "గాలి",
+        "Rain": "వర్షం",
+        "Today": "ఈరోజు"
     }
 };
 
@@ -500,7 +518,7 @@ function updateCurrentDate() {
     if (!currentDateLabel) return;
     const locale = {
         en: "en-IN", hi: "hi-IN", gu: "gu-IN", mr: "mr-IN",
-        kn: "kn-IN", ta: "ta-IN", bn: "bn-IN"
+        kn: "kn-IN", ta: "ta-IN", bn: "bn-IN", te: "te-IN"
     }[currentLanguage] || "en-IN";
     currentDateLabel.textContent = new Intl.DateTimeFormat(locale, {
         weekday: "short",
@@ -825,7 +843,6 @@ weatherHub: document.getElementById("weatherHubScreen"),
 aviation: document.getElementById("aviationScreen"),
 marine: document.getElementById("marineScreen"),
 routeWeather: document.getElementById("routeWeatherScreen"),
-missionBriefing: document.getElementById("missionBriefingScreen")
 };
 
 /* =========================================================
@@ -961,7 +978,7 @@ if (screenName === "farmerAlerts") {
     initFarmerAlerts();
 }
 
-if (["weatherHub", "aviation", "marine", "missionBriefing"].includes(screenName)) {
+if (["weatherHub", "aviation", "marine"].includes(screenName)) {
     loadIntelligenceScreen(screenName);
 }
 if (screenName === "routeWeather") {
@@ -1020,7 +1037,6 @@ async function loadIntelligenceScreen(screenName) {
         weatherHub: "/api/intelligence/hub",
         aviation: "/api/intelligence/aviation",
         marine: "/api/intelligence/marine",
-        missionBriefing: "/api/intelligence/mission-briefing"
     }[screenName];
     if (!endpoint) return;
 
@@ -1052,8 +1068,6 @@ async function loadIntelligenceScreen(screenName) {
             document.getElementById("marineRiskScore").textContent = `${data.risk.score} / 100`;
             document.getElementById("marineRiskLevel").textContent = data.risk.level;
             renderOperationalBriefing("marine", data);
-        } else if (screenName === "missionBriefing") {
-            renderMissionBriefing(data);
         }
     } catch (error) {
         console.warn(`Unable to load ${screenName} intelligence`, error);
@@ -1098,39 +1112,6 @@ function renderOperationalBriefing(operation, data) {
         set("marineBriefingVisibility", "🟢 Good");
         set("marineBriefingSummary", `${data.seaState?.weather || "Live marine conditions"} are being monitored. Plan a cautious crossing when conditions trend upward.`);
         set("marineBriefingFactor", mainFactor);
-    }
-}
-
-function renderMissionBriefing(data) {
-    const risks = data.risks || {};
-    const summary = document.getElementById("missionBriefingSummary");
-    const updated = document.getElementById("missionBriefingUpdated");
-    const location = document.querySelector("#missionBriefingScreen .location-badge");
-    if (location && data.location) location.textContent = `📍 ${data.location}`;
-    if (summary) summary.textContent = data.summary || "Live operational weather is available.";
-    if (updated) updated.textContent = data.updatedAt ? `Updated ${new Date(data.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Updated live";
-    const domainRisks = [["missionLandRisk", "land", risks.land], ["missionAirRisk", "air", risks.air], ["missionSeaRisk", "sea", risks.sea]];
-    domainRisks.forEach(([id, domain, risk]) => {
-        const element = document.getElementById(id);
-        const card = element?.closest(".mission-risk-card");
-        const level = String(risk?.level || "Unknown");
-        if (element && risk) element.textContent = `${level} risk · ${risk.detail}`;
-        if (card) {
-            card.dataset.risk = level.toLowerCase();
-            card.setAttribute("aria-label", `${domain} operations: ${level} risk`);
-        }
-    });
-    const action = document.getElementById("missionBriefingAction");
-    if (action) {
-        const phrase = (risk, clearText, watchText, highText) => {
-            const level = String(risk?.level || "").toLowerCase();
-            return level === "high" ? highText : level === "medium" || level === "moderate" ? watchText : clearText;
-        };
-        action.textContent = [
-            phrase(risks.land, "Land ops clear", "Monitor land rainfall and soil moisture", "Delay exposed land work"),
-            phrase(risks.air, "Air visibility stable", "Monitor air visibility before midday", "Recheck flight conditions before departure"),
-            phrase(risks.sea, "Sea conditions stable", "Use caution at sea", "Postpone marine operations")
-        ].join("; ") + ".";
     }
 }
 
@@ -1300,10 +1281,7 @@ document.querySelectorAll(".route-mode-pills button").forEach(button => {
 
 document.querySelectorAll("[data-briefing]").forEach(button => {
     button.addEventListener("click", () => {
-        if (button.dataset.briefing === "mission") {
-            loadIntelligenceScreen("missionBriefing");
-            button.textContent = "Briefing refreshed ✓";
-        } else if (button.dataset.briefing === "aviation" || button.dataset.briefing === "marine") {
+        if (button.dataset.briefing === "aviation" || button.dataset.briefing === "marine") {
             const card = button.closest(".operational-briefing-card");
             card?.classList.add("briefing-generated");
             button.textContent = "Briefing ready ✓";
@@ -1315,6 +1293,35 @@ document.querySelectorAll("[data-briefing]").forEach(button => {
 });
 
 document.getElementById("analyzeRouteButton")?.addEventListener("click", loadRouteIntelligence);
+document.getElementById("resetRouteButton")?.addEventListener("click", () => {
+    const from = document.getElementById("routeFrom");
+    const to = document.getElementById("routeTo");
+    if (from) from.value = "";
+    if (to) to.value = "";
+    const button = document.getElementById("analyzeRouteButton");
+    if (button) button.textContent = "Analyze Route";
+    const status = document.getElementById("routeMapStatus");
+    if (status) status.textContent = "Enter a route to load weather";
+    const title = document.getElementById("routeJourneyTitle");
+    if (title) title.innerHTML = "-- <span>→</span> --";
+    const meta = document.getElementById("routeJourneyMeta");
+    if (meta) meta.textContent = "Analyze your route to calculate distance, travel time, and arrival weather.";
+    const score = document.getElementById("routeRiskScore");
+    if (score) score.innerHTML = '-- <small id="routeRiskLevel">WAITING</small>';
+    const badge = document.getElementById("routeRiskBadge");
+    if (badge) {
+        badge.textContent = "Awaiting route";
+        badge.dataset.risk = "";
+    }
+    ["routeWindSummary", "routeRainSummary", "routeArrivalForecast", "routeArrivalHeadline", "routeArrivalTime"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = "--";
+    });
+    const timeline = document.getElementById("routeSafetyTimeline");
+    if (timeline) timeline.innerHTML = '<p class="route-empty-state">Analyze your route to see conditions at departure, midway, and arrival.</p>';
+    routeMapLayers.forEach(layer => routeMap?.removeLayer(layer));
+    routeMapLayers = [];
+});
 
 /* =========================================================
 TOP MENU BUTTON
@@ -1360,9 +1367,6 @@ menu.innerHTML = `
     </div>
     <div class="menu-item" data-screen="routeWeather">
         🗺️ <span>Route Weather</span>
-    </div>
-    <div class="menu-item" data-screen="missionBriefing">
-        🧠 <span>Mission Briefing</span>
     </div>
     <div class="menu-section-label">GENERAL NAVIGATION</div>
     <div class="menu-item" data-screen="forecast">
@@ -2087,15 +2091,45 @@ function renderCycloneStatus(data) {
     });
     const mapNote = document.getElementById("cycloneMapNote");
     if (mapNote) mapNote.textContent = hasCyclone ? "Verified track data loaded" : "No verified track to plot";
+    renderCycloneMap(data);
     translatePage();
+}
+
+let cycloneMap;
+let cycloneMapLayer;
+
+function renderCycloneMap(data) {
+    const container = document.getElementById("cycloneMap");
+    if (!container || !window.L) return;
+    if (!cycloneMap) {
+        cycloneMap = L.map(container).setView([20.5, 75], 5);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors",
+            maxZoom: 12
+        }).addTo(cycloneMap);
+    }
+    if (cycloneMapLayer) cycloneMap.removeLayer(cycloneMapLayer);
+    if (data?.currentLat != null && data?.currentLon != null) {
+        cycloneMapLayer = L.marker([Number(data.currentLat), Number(data.currentLon)]).addTo(cycloneMap)
+            .bindPopup(`<strong>${escapeHTML(data.name || "Cyclone")}</strong><br>${escapeHTML(data.status || "Active monitoring")}`);
+        cycloneMap.setView([Number(data.currentLat), Number(data.currentLon)], 6);
+    } else {
+        cycloneMapLayer = null;
+        cycloneMap.setView([20.5, 75], 5);
+    }
+    window.setTimeout(() => cycloneMap.invalidateSize(), 50);
 }
 
 async function loadCycloneStatus() {
     const updated = document.getElementById("cycloneUpdated");
     if (updated) updated.textContent = "Checking official sources...";
     try {
-        const params = new URLSearchParams({ lat: String(farmerLocation.latitude), lon: String(farmerLocation.longitude), language: currentLanguage });
-        const response = await fetch(`${API_BASE}/api/cyclones`);
+        const params = new URLSearchParams({
+            lat: String(farmerLocation.latitude),
+            lon: String(farmerLocation.longitude),
+            name: farmerLocation.name
+        });
+        const response = await fetch(`${API_BASE}/api/cyclones?${params.toString()}`);
         if (!response.ok) throw new Error(`Cyclone request failed (${response.status})`);
         const cyclones = await response.json();
         const active = Array.isArray(cyclones) ? cyclones[0] : cyclones;
@@ -2115,6 +2149,10 @@ async function loadCycloneStatus() {
         if (updated) updated.textContent = "Live source unavailable · no warning issued";
         translatePage();
     }
+
+    window.setInterval(() => {
+        if (!cycloneScreen?.classList.contains("hidden")) loadCycloneStatus();
+    }, 5 * 60 * 1000);
 }
 
     /* =========================================================
@@ -3320,104 +3358,9 @@ function setMapText(id, value) {
         if (element) element.textContent = value ?? "--";
     }
 
-function weatherMapConditionLabel(temperature) {
-        return temperature >= 35 ? "Very Hot" : temperature >= 28 ? "Warm" : "Cool";
-    }
-
 function renderWeatherMap(data) {
-        const current = data?.current || {};
-        const dailyPayload = data?.daily || {};
-        const daily = Array.isArray(data?.daily) ? data.daily : (dailyPayload.time || []).map((_, index) => ({
-            tempMax: dailyPayload.temperature_2m_max?.[index],
-            tempMin: dailyPayload.temperature_2m_min?.[index],
-            precipitationSum: dailyPayload.precipitation_sum?.[index],
-            precipitationProbabilityMax: dailyPayload.precipitation_probability_max?.[index],
-            windSpeedMax: dailyPayload.wind_speed_10m_max?.[index],
-        }));
-        const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
-        const location = data?.location || farmerLocation.name || "Current location";
-        setMapText("weatherMapLocationName", `${location}, ${farmerLocation.country || "India"}`);
-        const temperature = Number(current.temperature);
-        const values = [temperature, Number(daily[0]?.tempMax), Number(daily[0]?.tempMin)].filter(Number.isFinite);
-        const max = values.length ? Math.max(...values) : null;
-        const min = values.length ? Math.min(...values) : null;
-        const mid = values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
-        setMapText("weatherMapTempHot", max == null ? "--" : `${max}°C`);
-        setMapText("weatherMapTempWarm", mid == null ? "--" : `${mid}°C`);
-        setMapText("weatherMapTempCool", min == null ? "--" : `${min}°C`);
-        setMapText("weatherMapTempHotLabel", max == null ? "Waiting for live data" : weatherMapConditionLabel(max));
-        setMapText("weatherMapTempWarmLabel", mid == null ? "Waiting for live data" : weatherMapConditionLabel(mid));
-        setMapText("weatherMapTempCoolLabel", min == null ? "Waiting for live data" : weatherMapConditionLabel(min));
-
-        const rainfall = daily.slice(0, 7).map(day => Number(day.precipitationSum) || 0);
-        const rainProbability = daily.slice(0, 7).map(day => Number(day.precipitationProbabilityMax) || 0);
-        const totalRain = rainfall.reduce((sum, value) => sum + value, 0);
-        const maxRainProbability = rainProbability.length ? Math.max(...rainProbability) : Number(current.precipitationProbability) || 0;
-        setMapText("weatherMapRainHigh", maxRainProbability >= 60 ? "High Rain" : "No high-risk rain");
-        setMapText("weatherMapRainHighAmount", `${totalRain.toFixed(1)} mm / 7 days`);
-        setMapText("weatherMapRainHighDetail", `${maxRainProbability}% peak probability in the live forecast`);
-        setMapText("weatherMapRainModerate", maxRainProbability >= 30 ? "Moderate Rain" : "Low Rain");
-        setMapText("weatherMapRainModerateAmount", `${Math.round(totalRain / Math.max(rainfall.length, 1))} mm average`);
-        setMapText("weatherMapRainModerateDetail", "Forecast-derived precipitation outlook");
-        setMapText("weatherMapRainLight", "Current outlook");
-        setMapText("weatherMapRainLightAmount", `${Number(current.precipitation || 0).toFixed(1)} mm now`);
-        setMapText("weatherMapRainLightDetail", `${Number(current.precipitationProbability || 0)}% current probability`);
-
-        const warning = alerts.find(alert => ["warning", "emergency"].includes(String(alert.severity || "").toLowerCase()));
-        setMapText("weatherMapAlertCritical", warning ? "🔴 Critical" : "🟢 No critical alert");
-        setMapText("weatherMapAlertCriticalDetail", warning ? (warning.headline || warning.event || "Official warning active") : "No verified critical alert");
-        setMapText("weatherMapAlertWarning", maxRainProbability >= 60 ? "🟡 Warning" : "🟢 No rain warning");
-        setMapText("weatherMapAlertWarningDetail", maxRainProbability >= 60 ? "Heavy rain possible in forecast" : "No significant rain warning");
-        setMapText("weatherMapAlertInfo", "🔵 Info");
-        setMapText("weatherMapAlertInfoDetail", data?.updatedAt ? `Updated ${new Date(data.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Live feed");
-        setMapText("weatherMapWindCurrent", `↗️ ${current.windSpeed ?? "--"} km/h`);
-        const maxWind = daily.reduce((maxValue, day) => Math.max(maxValue, Number(day.windSpeedMax) || 0), Number(current.windSpeed) || 0);
-        setMapText("weatherMapWindMax", `↗️ ${maxWind || "--"} km/h`);
-        const humidity = Number(current.relativeHumidity);
-        const humidityLevel = document.getElementById("weatherMapHumidityLevel");
-        if (humidityLevel) humidityLevel.style.width = `${Math.max(0, Math.min(100, humidity || 0))}%`;
-        setMapText("weatherMapHumidityValue", humidity ? `${humidity}% Humidity` : "--");
-
-        loadNearbyWeatherMapAreas();
-    }
-
-function distanceBetweenCoordinates(lat1, lon1, lat2, lon2) {
-        const radians = value => value * Math.PI / 180;
-        const a = Math.sin(radians(lat2 - lat1) / 2) ** 2 + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(radians(lon2 - lon1) / 2) ** 2;
-        return 6371 * 2 * Math.asin(Math.sqrt(a));
-    }
-
-async function loadNearbyWeatherMapAreas() {
-        const baseLat = Number(farmerLocation.latitude);
-        const baseLon = Number(farmerLocation.longitude);
-        if (!Number.isFinite(baseLat) || !Number.isFinite(baseLon)) return;
-        try {
-                const response = await fetch(`${API_BASE}/api/location/nearby?${new URLSearchParams({ lat: String(baseLat), lon: String(baseLon) })}`);
-                if (!response.ok) throw new Error("Nearby place lookup failed");
-                const places = (await response.json()).slice(0, 3);
-                const resolved = await Promise.all(places.map(async place => {
-                const lat = Number(place.latitude);
-                const lon = Number(place.longitude);
-                const name = place.name || "Nearby area";
-                const weatherResponse = await fetch(`${API_BASE}/api/weather/current?${new URLSearchParams({ lat: String(lat), lon: String(lon), name })}`);
-                if (!weatherResponse.ok) throw new Error("Nearby weather unavailable");
-                const weather = await weatherResponse.json();
-                return { name, weather, distance: place.distanceKm ?? distanceBetweenCoordinates(baseLat, baseLon, lat, lon) };
-            }));
-            resolved.forEach((item, index) => {
-                const current = item.weather.current || {};
-                setMapText(`weatherMapNearbyName${index + 1}`, item.name);
-                setMapText(`weatherMapNearbyTemp${index + 1}`, `${current.temperature ?? "--"}°C`);
-                setMapText(`weatherMapNearbyDistance${index + 1}`, `${Math.round(item.distance)} km away`);
-            });
-        } catch (error) {
-            console.warn("Nearby map areas are unavailable", error);
-            [1, 2, 3].forEach(index => {
-                setMapText(`weatherMapNearbyName${index}`, index === 1 ? farmerLocation.name : "Nearby area");
-                setMapText(`weatherMapNearbyTemp${index}`, "--");
-                setMapText(`weatherMapNearbyDistance${index}`, "Live lookup unavailable");
-            });
-    }
+    const location = data?.location || farmerLocation.name || "Current location";
+    setMapText("weatherMapLocationName", `${location}, ${farmerLocation.country || "India"}`);
 }
 
 function moveSelectedWeatherMarker(latitude, longitude) {
@@ -3841,7 +3784,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const onboardingCopy = {
         en: { title: "How will you use WeatherGPT?", subtitle: "Choose an experience made for you.", profileTitle: "Let’s personalize your weather", farmerTitle: "Let’s set up your farm profile", profileSubtitle: "A few details help us make every forecast local.", skip: "Skip for now", back: "← Back", normal: "Normal User", farmer: "Farmer Mode" },
         hi: { title: "आप WeatherGPT का उपयोग कैसे करेंगे?", subtitle: "अपने लिए सही अनुभव चुनें।", profileTitle: "आइए आपके मौसम को व्यक्तिगत बनाएं", farmerTitle: "आइए आपका खेत प्रोफ़ाइल बनाएं", profileSubtitle: "कुछ जानकारी से हर पूर्वानुमान आपके स्थान के अनुसार होगा।", skip: "अभी छोड़ें", back: "← वापस", normal: "सामान्य उपयोगकर्ता", farmer: "किसान मोड" },
-        gu: { title: "તમે WeatherGPT નો ઉપયોગ કેવી રીતે કરશો?", subtitle: "તમારા માટે યોગ્ય અનુભવ પસંદ કરો.", profileTitle: "ચાલો હવામાનને તમારા માટે વ્યક્તિગત બનાવીએ", farmerTitle: "ચાલો તમારી ખેતર પ્રોફાઇલ બનાવીએ", profileSubtitle: "થોડી માહિતીથી દરેક આગાહી તમારા વિસ્તાર માટે યોગ્ય બનશે.", skip: "હમણાં છોડો", back: "← પાછા", normal: "સામાન્ય વપરાશકર્તા", farmer: "ખેડૂત મોડ" }
+        gu: { title: "તમે WeatherGPT નો ઉપયોગ કેવી રીતે કરશો?", subtitle: "તમારા માટે યોગ્ય અનુભવ પસંદ કરો.", profileTitle: "ચાલો હવામાનને તમારા માટે વ્યક્તિગત બનાવીએ", farmerTitle: "ચાલો તમારી ખેતર પ્રોફાઇલ બનાવીએ", profileSubtitle: "થોડી માહિતીથી દરેક આગાહી તમારા વિસ્તાર માટે યોગ્ય બનશે.", skip: "હમણાં છોડો", back: "← પાછા", normal: "સામાન્ય વપરાશકર્તા", farmer: "ખેડૂત મોડ" },
+        mr: { title: "तुम्ही WeatherGPT कसे वापराल?", subtitle: "तुमच्यासाठी योग्य अनुभव निवडा.", profileTitle: "तुमचे हवामान वैयक्तिक करूया", farmerTitle: "तुमचे शेत प्रोफाइल तयार करूया", profileSubtitle: "काही माहितीमुळे अंदाज तुमच्या स्थानानुसार मिळेल.", skip: "आत्ता वगळा", back: "← मागे", normal: "सामान्य वापरकर्ता", farmer: "शेतकरी मोड" },
+        kn: { title: "ನೀವು WeatherGPT ಅನ್ನು ಹೇಗೆ ಬಳಸುತ್ತೀರಿ?", subtitle: "ನಿಮಗಾಗಿ ಅನುಭವವನ್ನು ಆಯ್ಕೆಮಾಡಿ.", profileTitle: "ನಿಮ್ಮ ಹವಾಮಾನವನ್ನು ವೈಯಕ್ತಿಕಗೊಳಿಸೋಣ", farmerTitle: "ನಿಮ್ಮ ಕೃಷಿ ಪ್ರೊಫೈಲ್ ಸಿದ್ಧಪಡಿಸೋಣ", profileSubtitle: "ಕೆಲವು ಮಾಹಿತಿಯಿಂದ ಸ್ಥಳೀಯ ಮುನ್ಸೂಚನೆ ಸಿಗುತ್ತದೆ.", skip: "ಈಗ ಬಿಟ್ಟುಬಿಡಿ", back: "← ಹಿಂದೆ", normal: "ಸಾಮಾನ್ಯ ಬಳಕೆದಾರ", farmer: "ರೈತ ಮೋಡ್" },
+        ta: { title: "WeatherGPT-ஐ எப்படி பயன்படுத்துவீர்கள்?", subtitle: "உங்களுக்கான அனுபவத்தைத் தேர்ந்தெடுக்கவும்.", profileTitle: "உங்கள் வானிலையை தனிப்பயனாக்குவோம்", farmerTitle: "உங்கள் பண்ணை சுயவிவரத்தை அமைப்போம்", profileSubtitle: "சில தகவல்கள் உள்ளூர் முன்னறிவிப்பை வழங்கும்.", skip: "இப்போது தவிர்க்கவும்", back: "← பின்", normal: "சாதாரண பயனர்", farmer: "விவசாயி பயன்முறை" },
+        bn: { title: "আপনি WeatherGPT কীভাবে ব্যবহার করবেন?", subtitle: "আপনার জন্য অভিজ্ঞতা বেছে নিন।", profileTitle: "আপনার আবহাওয়া ব্যক্তিগত করি", farmerTitle: "আপনার খামার প্রোফাইল তৈরি করি", profileSubtitle: "কিছু তথ্য স্থানীয় পূর্বাভাস দিতে সাহায্য করবে।", skip: "এখন এড়িয়ে যান", back: "← পিছনে", normal: "সাধারণ ব্যবহারকারী", farmer: "কৃষক মোড" },
+        te: { title: "మీరు WeatherGPTని ఎలా ఉపయోగిస్తారు?", subtitle: "మీ కోసం అనుభవాన్ని ఎంచుకోండి.", profileTitle: "మీ వాతావరణాన్ని వ్యక్తిగతీకరిద్దాం", farmerTitle: "మీ వ్యవసాయ ప్రొఫైల్‌ను ఏర్పాటు చేద్దాం", profileSubtitle: "కొంత సమాచారం స్థానిక సూచనను అందిస్తుంది.", skip: "ఇప్పుడు దాటవేయి", back: "← వెనుకకు", normal: "సాధారణ వినియోగదారు", farmer: "రైతు మోడ్" }
     };
     const applyOnboardingLanguage = language => {
         const copy = onboardingCopy[language] || onboardingCopy.en;
